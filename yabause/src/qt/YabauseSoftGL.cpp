@@ -48,7 +48,8 @@ void YabauseSoftGL::updateView( const QSize& s )
 
 void YabauseSoftGL::swapBuffers()
 {
-	this->update(this->rect());
+//	this->update(this->rect());
+	this->repaint(this->rect());
 }
 
 QImage YabauseSoftGL::grabFrameBuffer(bool withAlpha)
@@ -65,9 +66,8 @@ QImage YabauseSoftGL::grabFrameBuffer(bool withAlpha)
 	QImage image = QImage((uchar *) dispbuffer, buf_width, buf_height, QImage::Format_RGB16);
 #else
 	QImage image = QImage((uchar *) dispbuffer, buf_width, buf_height, QImage::Format_RGB32);
-	image = image.rgbSwapped();
 #endif
-	return image;
+	return image.rgbSwapped();
 }
 
 void YabauseSoftGL::paintEvent( QPaintEvent * event )

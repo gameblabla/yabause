@@ -175,6 +175,16 @@ if (BSWAP32_OK)
 endif()
 
 # sys/time.h
+# GLES|2
+option(YAB_WANT_GLES "use GLES2 for video output" ON)
+if (YAB_WANT_GLES AND (YAB_RGB STREQUAL "565"))
+	add_definitions(-DHAVE_LIBGL=1)
+	add_definitions(-DHAVE_GLES=1)
+	add_definitions(-DHAVE_GLXGETPROCADDRESS=1)
+	set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} -lEGL -lGLESv2 )
+
+endif ()
+
 check_include_file("sys/time.h" SYSTIME_OK)
 if (SYSTIME_OK)
 	add_definitions(-DHAVE_SYS_TIME_H=1)
@@ -234,8 +244,11 @@ endif ()
 
 # SDL
 option(YAB_WANT_SDL "use SDL cores if available" ON)
+option(YAB_USE_SDL2 "use SDL2 instead of SDL1.2 if available" ON)
 if (YAB_WANT_SDL)
-	include(FindSDL2 OPTIONAL)
+	if (YAB_USE_SDL2)
+		include(FindSDL2 OPTIONAL)
+	endif()
 
 	if (SDL2_FOUND)
 		add_definitions(-DHAVE_LIBSDL2=1)

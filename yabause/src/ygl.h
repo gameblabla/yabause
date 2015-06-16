@@ -48,6 +48,11 @@
         #define GLX_GLXEXT_PROTOTYPES 1
         #include <GL/glew.h>
         #include <GL/gl.h>
+    #elif defined HAVE_GLES
+        #include <GLES2/gl2.h>
+        #include <GLES2/gl2ext.h>
+        #define GLAPI_ENTRY
+        #define HAVE_FBO
     #else
         #include <GL/gl.h>
     #endif
@@ -288,6 +293,15 @@ int YglProgramInit();
 int YglProgramChange( YglLevel * level, int prgid );
 
 #if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_) && !defined(_OGLES3_)
+#if HAVE_GLES  // Does anything need this?  It breaks a bunch of prototypes if
+       // GLchar is typedef'd instead of #define'd  --AC
+#ifndef GLchar
+#define GLchar GLbyte
+#endif
+#endif  // 0
+
+//#if defined(HAVE_GLES)
+//#else
 
 extern GLuint (STDCALL *glCreateProgram)(void);
 extern GLuint (STDCALL *glCreateShader)(GLenum);
