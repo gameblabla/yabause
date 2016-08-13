@@ -294,7 +294,7 @@ void CCodeGen_AArch32::RegisterExternalSymbols(CObjectFile* objectFile) const
 	objectFile->AddExternalSymbol("_CodeGen_AArch32_mod_signed",	reinterpret_cast<uintptr_t>(&CodeGen_AArch32_mod_signed));
 }
 
-void CCodeGen_AArch32::GenerateCode(const StatementList& statements, unsigned int stackSize)
+void __attribute__((optimize(0))) CCodeGen_AArch32::GenerateCode(const StatementList& statements, unsigned int stackSize)
 {
 	//Align stack size (must be aligned on 16 bytes boundary)
 	stackSize = (stackSize + 0xF) & ~0xF;
@@ -306,6 +306,7 @@ void CCodeGen_AArch32::GenerateCode(const StatementList& statements, unsigned in
 	for(const auto& statement : statements)
 	{
 		bool found = false;
+
 		auto begin = m_matchers.lower_bound(statement.op);
 		auto end = m_matchers.upper_bound(statement.op);
 

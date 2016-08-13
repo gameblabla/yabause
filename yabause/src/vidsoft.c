@@ -2373,11 +2373,14 @@ void VIDSoftResize(unsigned int w, unsigned int h, int on)
       IsFullscreen = on;
       glClear(GL_COLOR_BUFFER_BIT);
 
-      #ifdef HAVE_GLES
-      #warning TODO: Matrix mode wrapper
-      #else
-      glViewport(0, 0, w, h);
-      #endif
+      int new_w = (int)((h/224)*320);
+
+      if ( w - new_w > 50 )
+      {
+          int spacer = (int)((w-new_w)/2);
+          glViewport( spacer, 0, w-spacer, h);
+      } else
+          glViewport(0, 0, w, h);
       outputwidth = w;
       outputheight = h;
    }
@@ -2536,8 +2539,7 @@ int currentPixelIsVisible;
 int characterWidth;
 int characterHeight;
 
-static int getpixel(int linenumber, int currentlineindex, vdp1cmd_struct *cmd, u8 * ram) {
-
+static INLINE int getpixel(int linenumber, int currentlineindex, vdp1cmd_struct *cmd, u8 * ram) {
 	u32 characterAddress;
 	u32 colorlut;
 	u16 colorbank;
@@ -2661,7 +2663,7 @@ static int getpixel(int linenumber, int currentlineindex, vdp1cmd_struct *cmd, u
 	return 0;
 }
 
-static int gouraudAdjust( int color, int tableValue )
+static INLINE int gouraudAdjust( int color, int tableValue )
 {
 	color += (tableValue - 0x10);
 
@@ -2670,7 +2672,6 @@ static int gouraudAdjust( int color, int tableValue )
 
 	return color;
 }
-
 
 static int CheckDil(int y, Vdp1 * regs)
 {
@@ -2726,7 +2727,7 @@ int IsClipped(int x, int y, Vdp1* regs, vdp1cmd_struct * cmd)
    }
 }
 
-static void putpixel8(int x, int y, Vdp1 * regs, vdp1cmd_struct *cmd, u8 * back_framebuffer) {
+static INLINE void putpixel8(int x, int y, Vdp1 * regs, vdp1cmd_struct *cmd, u8 * back_framebuffer) {
 
     int y2 = y / vdp1interlace;
     u8 * iPix = &back_framebuffer[(y2 * vdp1width) + x];
@@ -2761,8 +2762,7 @@ static void putpixel8(int x, int y, Vdp1 * regs, vdp1cmd_struct *cmd, u8 * back_
     }
 }
 
-static void putpixel(int x, int y, Vdp1* regs, vdp1cmd_struct * cmd, u8 * back_framebuffer) {
-
+static INLINE void putpixel(int x, int y, Vdp1* regs, vdp1cmd_struct * cmd, u8 * back_framebuffer) {
 	u16* iPix;
 	int mesh = cmd->CMDPMOD & 0x0100;
 	int SPD = ((cmd->CMDPMOD & 0x40) != 0);//show the actual color of transparent pixels if 1 (they won't be drawn transparent)
@@ -2850,7 +2850,7 @@ static void putpixel(int x, int y, Vdp1* regs, vdp1cmd_struct * cmd, u8 * back_f
 	}
 }
 
-static int iterateOverLine(int x1, int y1, int x2, int y2, int greedy, void *data,
+static INLINE int iterateOverLine(int x1, int y1, int x2, int y2, int greedy, void *data,
    int(*line_callback)(int x, int y, int i, void *data, Vdp1* regs, vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer), Vdp1* regs, vdp1cmd_struct * cmd, u8 * ram, u8* back_framebuffer) {
 	int i, a, ax, ay, dx, dy;
 
@@ -2942,7 +2942,7 @@ typedef struct {
   int previousStep;
 } DrawLineData;
 
-static int DrawLineCallback(int x, int y, int i, void *data, Vdp1* regs, vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer)
+static INLINE int DrawLineCallback(int x, int y, int i, void *data, Vdp1* regs, vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer)
 {
   int currentStep;
   DrawLineData *linedata = data;
@@ -2952,22 +2952,22 @@ static int DrawLineCallback(int x, int y, int i, void *data, Vdp1* regs, vdp1cmd
   leftColumnColor.b += linedata->xbluestep;
 
   currentStep = (int)i * linedata->texturestep;
-  if (getpixel(linedata->linenumber, currentStep)) {
+  if (getpixel(linedata->linenumber, currentStep, cmd, ram)) {
     if (currentStep != linedata->previousStep) {
       linedata->previousStep = currentStep;
       linedata->endcodesdetected ++;
     }
   } else if (vdp1pixelsize == 2) {
-    putpixel(x, y);
+    putpixel(x, y, regs, cmd, back_framebuffer);
   } else {
-    putpixel8(x, y);
+    putpixel8(x, y, regs, cmd, back_framebuffer);
     }
 
   if (linedata->endcodesdetected == 2) return -1;
 
   return 0;
 }
-static int DrawLine16b(int x, int y, int i, void *data)
+static INLINE int DrawLine16b(int x, int y, int i, void *data, Vdp1* regs, vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer)
 {
   int currentStep;
   DrawLineData *linedata = data;
@@ -2977,19 +2977,19 @@ static int DrawLine16b(int x, int y, int i, void *data)
   leftColumnColor.b += linedata->xbluestep;
 
   currentStep = (int)i * linedata->texturestep;
-  if (getpixel(linedata->linenumber, currentStep)) {
+  if (getpixel(linedata->linenumber, currentStep, cmd, ram)) {
     if (currentStep != linedata->previousStep) {
       linedata->previousStep = currentStep;
       linedata->endcodesdetected ++;
     }
   }
-  putpixel(x, y);
+  putpixel(x, y, regs, cmd, back_framebuffer);
 
   if (linedata->endcodesdetected == 2) return -1;
 
   return 0;
 }
-static int DrawLine8b(int x, int y, int i, void *data)
+static INLINE int DrawLine8b(int x, int y, int i, void *data, Vdp1* regs, vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer)
 {
   int currentStep;
   DrawLineData *linedata = data;
@@ -2999,20 +2999,20 @@ static int DrawLine8b(int x, int y, int i, void *data)
   leftColumnColor.b += linedata->xbluestep;
 
   currentStep = (int)i * linedata->texturestep;
-  if (getpixel(linedata->linenumber, currentStep)) {
+  if (getpixel(linedata->linenumber, currentStep, cmd, ram)) {
     if (currentStep != linedata->previousStep) {
       linedata->previousStep = currentStep;
       linedata->endcodesdetected ++;
     }
   }
-  putpixel8(x, y);
+  putpixel8(x, y, regs, cmd, back_framebuffer);
 
   if (linedata->endcodesdetected == 2) return -1;
 
   return 0;
 }
 
-static int iterateOverLine16b(int x1, int y1, int x2, int y2, int greedy, void *data) {
+static int iterateOverLine16b(int x1, int y1, int x2, int y2, int greedy, void *data, Vdp1* regs, vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer) {
   int i, a, ax, ay, dx, dy;
 
   a = i = 0;
@@ -3030,7 +3030,7 @@ static int iterateOverLine16b(int x1, int y1, int x2, int y2, int greedy, void *
     if (ax != ay) dx = -dx;
 
     for (; x1 != x2; x1 += ax, i++) {
-      if (DrawLine16b(x1, y1, i, data) != 0) return i + 1;
+      if (DrawLine16b(x1, y1, i, data, regs, cmd, ram, back_framebuffer) != 0) return i + 1;
 
       a += dy;
       if (abs(a) >= abs(dx)) {
@@ -3041,10 +3041,10 @@ static int iterateOverLine16b(int x1, int y1, int x2, int y2, int greedy, void *
         if (greedy) {
           i ++;
           if (ax == ay) {
-            if (DrawLine16b(x1 + ax, y1 - ay, i, data) != 0)
+            if (DrawLine16b(x1 + ax, y1 - ay, i, data, regs, cmd, ram, back_framebuffer) != 0)
               return i + 1;
           } else {
-            if (DrawLine16b(x1, y1, i, data) != 0)
+            if (DrawLine16b(x1, y1, i, data, regs, cmd, ram, back_framebuffer) != 0)
               return i + 1;
           }
         }
@@ -3053,14 +3053,14 @@ static int iterateOverLine16b(int x1, int y1, int x2, int y2, int greedy, void *
 
     // If the line isn't greedy here, we end up with gaps that don't occur on the Saturn
     if (/*(i == 0) || (y1 != y2)*/1) {
-      DrawLine16b(x2, y2, i, data);
+      DrawLine16b(x2, y2, i, data, regs, cmd, ram, back_framebuffer);
       i ++;
     }
   } else {
     if (ax != ay) dy = -dy;
 
     for (; y1 != y2; y1 += ay, i++) {
-      if (DrawLine16b(x1, y1, i, data) != 0) return i + 1;
+      if (DrawLine16b(x1, y1, i, data, regs, cmd, ram, back_framebuffer) != 0) return i + 1;
 
       a += dx;
       if (abs(a) >= abs(dy)) {
@@ -3070,10 +3070,10 @@ static int iterateOverLine16b(int x1, int y1, int x2, int y2, int greedy, void *
         if (greedy) {
           i ++;
           if (ay == ax) {
-            if (DrawLine16b(x1, y1, i, data) != 0)
+            if (DrawLine16b(x1, y1, i, data, regs, cmd, ram, back_framebuffer) != 0)
               return i + 1;
           } else {
-            if (DrawLine16b(x1 - ax, y1 + ay, i, data) != 0)
+            if (DrawLine16b(x1 - ax, y1 + ay, i, data, regs, cmd, ram, back_framebuffer) != 0)
               return i + 1;
           }
         }
@@ -3081,7 +3081,7 @@ static int iterateOverLine16b(int x1, int y1, int x2, int y2, int greedy, void *
     }
 
     if (/*(i == 0) || (y1 != y2)*/1) {
-      DrawLine16b(x2, y2, i, data);
+      DrawLine16b(x2, y2, i, data, regs, cmd, ram, back_framebuffer);
       i ++;
     }
   }
@@ -3089,7 +3089,7 @@ static int iterateOverLine16b(int x1, int y1, int x2, int y2, int greedy, void *
   return i;
 }
 
-static int iterateOverLine8b(int x1, int y1, int x2, int y2, int greedy, void *data) {
+static int iterateOverLine8b(int x1, int y1, int x2, int y2, int greedy, void *data, Vdp1* regs, vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer) {
   int i, a, ax, ay, dx, dy;
 
   a = i = 0;
@@ -3107,7 +3107,7 @@ static int iterateOverLine8b(int x1, int y1, int x2, int y2, int greedy, void *d
     if (ax != ay) dx = -dx;
 
     for (; x1 != x2; x1 += ax, i++) {
-      if (DrawLine8b(x1, y1, i, data) != 0) return i + 1;
+      if (DrawLine8b(x1, y1, i, data, regs, cmd, ram, back_framebuffer) != 0) return i + 1;
 
       a += dy;
       if (abs(a) >= abs(dx)) {
@@ -3118,10 +3118,10 @@ static int iterateOverLine8b(int x1, int y1, int x2, int y2, int greedy, void *d
         if (greedy) {
           i ++;
           if (ax == ay) {
-            if (DrawLine8b(x1 + ax, y1 - ay, i, data) != 0)
+            if (DrawLine8b(x1 + ax, y1 - ay, i, data, regs, cmd, ram, back_framebuffer) != 0)
               return i + 1;
           } else {
-            if (DrawLine8b(x1, y1, i, data) != 0)
+            if (DrawLine8b(x1, y1, i, data, regs, cmd, ram, back_framebuffer) != 0)
               return i + 1;
           }
         }
@@ -3130,14 +3130,14 @@ static int iterateOverLine8b(int x1, int y1, int x2, int y2, int greedy, void *d
 
     // If the line isn't greedy here, we end up with gaps that don't occur on the Saturn
     if (/*(i == 0) || (y1 != y2)*/1) {
-      DrawLine8b(x2, y2, i, data);
+      DrawLine8b(x2, y2, i, data, regs, cmd, ram, back_framebuffer);
       i ++;
     }
   } else {
     if (ax != ay) dy = -dy;
 
     for (; y1 != y2; y1 += ay, i++) {
-      if (DrawLine8b(x1, y1, i, data) != 0) return i + 1;
+      if (DrawLine8b(x1, y1, i, data, regs, cmd, ram, back_framebuffer) != 0) return i + 1;
 
       a += dx;
       if (abs(a) >= abs(dy)) {
@@ -3147,10 +3147,10 @@ static int iterateOverLine8b(int x1, int y1, int x2, int y2, int greedy, void *d
         if (greedy) {
           i ++;
           if (ay == ax) {
-            if (DrawLine8b(x1, y1, i, data) != 0)
+            if (DrawLine8b(x1, y1, i, data, regs, cmd, ram, back_framebuffer) != 0)
               return i + 1;
           } else {
-            if (DrawLine8b(x1 - ax, y1 + ay, i, data) != 0)
+            if (DrawLine8b(x1 - ax, y1 + ay, i, data, regs, cmd, ram, back_framebuffer) != 0)
               return i + 1;
           }
         }
@@ -3158,7 +3158,7 @@ static int iterateOverLine8b(int x1, int y1, int x2, int y2, int greedy, void *d
     }
 
     if (/*(i == 0) || (y1 != y2)*/1) {
-      DrawLine8b(x2, y2, i, data);
+      DrawLine8b(x2, y2, i, data, regs, cmd, ram, back_framebuffer);
       i ++;
     }
   }
@@ -3166,7 +3166,7 @@ static int iterateOverLine8b(int x1, int y1, int x2, int y2, int greedy, void *d
   return i;
 }
 
-static int iterateOverLineFixed(int x1, int y1, int x2, int y2, int greedy, void *data) {
+static int iterateOverLineFixed(int x1, int y1, int x2, int y2, int greedy, void *data, Vdp1* regs, vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer) {
   int i, a, ax, ay, dx, dy;
 
   a = i = 0;
@@ -3184,7 +3184,7 @@ static int iterateOverLineFixed(int x1, int y1, int x2, int y2, int greedy, void
     if (ax != ay) dx = -dx;
 
     for (; x1 != x2; x1 += ax, i++) {
-      if (DrawLineCallback(x1, y1, i, data) != 0) return i + 1;
+      if (DrawLineCallback(x1, y1, i, data, regs, cmd, ram, back_framebuffer) != 0) return i + 1;
 
       a += dy;
       if (abs(a) >= abs(dx)) {
@@ -3195,10 +3195,10 @@ static int iterateOverLineFixed(int x1, int y1, int x2, int y2, int greedy, void
         if (greedy) {
           i ++;
           if (ax == ay) {
-            if (DrawLineCallback(x1 + ax, y1 - ay, i, data) != 0)
+            if (DrawLineCallback(x1 + ax, y1 - ay, i, data, regs, cmd, ram, back_framebuffer) != 0)
               return i + 1;
           } else {
-            if (DrawLineCallback(x1, y1, i, data) != 0)
+            if (DrawLineCallback(x1, y1, i, data, regs, cmd, ram, back_framebuffer) != 0)
               return i + 1;
           }
         }
@@ -3207,14 +3207,14 @@ static int iterateOverLineFixed(int x1, int y1, int x2, int y2, int greedy, void
 
     // If the line isn't greedy here, we end up with gaps that don't occur on the Saturn
     if (/*(i == 0) || (y1 != y2)*/1) {
-      DrawLineCallback(x2, y2, i, data);
+      DrawLineCallback(x2, y2, i, data, regs, cmd, ram, back_framebuffer);
       i ++;
     }
   } else {
     if (ax != ay) dy = -dy;
 
     for (; y1 != y2; y1 += ay, i++) {
-      if (DrawLineCallback(x1, y1, i, data) != 0) return i + 1;
+      if (DrawLineCallback(x1, y1, i, data, regs, cmd, ram, back_framebuffer) != 0) return i + 1;
 
       a += dx;
       if (abs(a) >= abs(dy)) {
@@ -3224,10 +3224,10 @@ static int iterateOverLineFixed(int x1, int y1, int x2, int y2, int greedy, void
         if (greedy) {
           i ++;
           if (ay == ax) {
-            if (DrawLineCallback(x1, y1, i, data) != 0)
+            if (DrawLineCallback(x1, y1, i, data, regs, cmd, ram, back_framebuffer) != 0)
               return i + 1;
           } else {
-            if (DrawLineCallback(x1 - ax, y1 + ay, i, data) != 0)
+            if (DrawLineCallback(x1 - ax, y1 + ay, i, data, regs, cmd, ram, back_framebuffer) != 0)
               return i + 1;
           }
         }
@@ -3235,7 +3235,7 @@ static int iterateOverLineFixed(int x1, int y1, int x2, int y2, int greedy, void
     }
 
     if (/*(i == 0) || (y1 != y2)*/1) {
-      DrawLineCallback(x2, y2, i, data);
+      DrawLineCallback(x2, y2, i, data, regs, cmd, ram, back_framebuffer);
       i ++;
     }
   }
@@ -3243,7 +3243,8 @@ static int iterateOverLineFixed(int x1, int y1, int x2, int y2, int greedy, void
   return i;
 }
 
-static int DrawLine( int x1, int y1, int x2, int y2, int greedy, myreal linenumber, myreal texturestep, myreal xredstep, myreal xgreenstep, myreal xbluestep)
+static int DrawLine( int x1, int y1, int x2, int y2, int greedy, myreal linenumber, myreal texturestep, myreal xredstep, myreal xgreenstep, myreal xbluestep, 
+   Vdp1* regs, vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer)
 {
 	DrawLineData data;
 
@@ -3255,9 +3256,9 @@ static int DrawLine( int x1, int y1, int x2, int y2, int greedy, myreal linenumb
 	data.endcodesdetected = 0;
 	data.previousStep = 123456789;
   if (vdp1pixelsize == 2) {
-    return iterateOverLine16b(x1, y1, x2, y2, greedy, &data);
+    return iterateOverLine16b(x1, y1, x2, y2, greedy, &data, regs, cmd, ram, back_framebuffer);
   } else {
-    return iterateOverLine8b(x1, y1, x2, y2, greedy, &data);
+    return iterateOverLine8b(x1, y1, x2, y2, greedy, &data, regs, cmd, ram, back_framebuffer);
   }
 	//return iterateOverLineFixed(x1, y1, x2, y2, greedy, &data);
 }

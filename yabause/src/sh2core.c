@@ -50,6 +50,7 @@
 SH2_struct *SH1=NULL;
 SH2_struct *MSH2=NULL;
 SH2_struct *SSH2=NULL;
+SH2_struct *CurrentSH2;
 SH2Interface_struct *SH1Core=NULL;
 SH2Interface_struct *SH2Core=NULL;
 extern SH2Interface_struct *SH2CoreList[];
@@ -289,6 +290,8 @@ void SH2PowerOn(SH2_struct *context) {
 
 void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
 {
+   CurrentSH2 = context;
+
    context->core->Exec(context, cycles);
 
    if(context->model == SHMT_SH1)
@@ -1982,6 +1985,8 @@ void FRTExec(SH2_struct *sh, u32 cycles)
    u32 frctemp;
    u32 mask;
 
+   CurrentSH2 = sh;  //SEB Just in case
+
    frcold = frctemp = (u32)sh->onchip.FRC.all;
    mask = (1 << sh->frc.shift) - 1;
    
@@ -2037,6 +2042,8 @@ void FRTExec(SH2_struct *sh, u32 cycles)
 void WDTExec(SH2_struct *sh, u32 cycles) {
    u32 wdttemp;
    u32 mask;
+
+   CurrentSH2 = sh;  //SEB Just in case
 
    if (!sh->wdt.isenable || sh->onchip.WTCSR & 0x80 || sh->onchip.RSTCSR & 0x80)
       return;

@@ -96,7 +96,7 @@ struct ShCodeBlock
    CMemoryFunction function;
    u32 start_pc;
    u32 end_pc;
-}code_blocks[MAX_SH1_BLOCKS];
+}code_blocks[MAX_SH1_BLOCKS] = {0};
 
 static Jitter::CJitter jit(Jitter::CreateCodeGen());
 
@@ -2736,17 +2736,20 @@ static INLINE void SH2HandleInterrupts(SH2_struct *context)
 
 void recompile_and_exec(SH2_struct *context)
 {
+   //u32 pc2 = (context->jit.pc & 0x000fffff)/2;
+   u32 pc2 = (context->jit.pc)/2;
    assert((context->jit.pc & 0xfff00000) == 0);
+   if(context->jit.pc & 0xfff00000) {
+      // not cached, out of "normal" space
+      ShCodeBlock block = {0};
 
-   if (code_blocks[context->jit.pc / 2].function.IsEmpty())
-   {
       Framework::CMemStream stream;
       stream.Seek(0, Framework::STREAM_SEEK_DIRECTION::STREAM_SEEK_SET);
       jit.SetStream(&stream);
       jit.Begin();
       basic_block = 0;
-      u32 current_pc = context->jit.pc;
-      code_blocks[context->jit.pc / 2].start_pc = current_pc;
+      u32 current_pc = context->jit.pc & 0x000fffff;
+      block.start_pc = current_pc;
       for (;;)
       {
          u16 instr = context->instruction = ((fetchfunc *)context->fetchlist)[(current_pc >> 20) & 0x0FF](context, current_pc);
@@ -2762,12 +2765,45 @@ void recompile_and_exec(SH2_struct *context)
 
       jit.End();
 
-      code_blocks[context->jit.pc / 2].function = CMemoryFunction(stream.GetBuffer(), stream.GetSize());
-      code_blocks[context->jit.pc / 2].end_pc = current_pc;
+      block.function = CMemoryFunction(stream.GetBuffer(), stream.GetSize());
+      block.end_pc = current_pc;
 
+      block.function(&context->jit);
+
+      //should clean???
+
+   } else {
+      if (code_blocks[pc2].function.IsEmpty())
+      {
+         Framework::CMemStream stream;
+         stream.Seek(0, Framework::STREAM_SEEK_DIRECTION::STREAM_SEEK_SET);
+         jit.SetStream(&stream);
+         jit.Begin();
+         basic_block = 0;
+         u32 current_pc = context->jit.pc & 0x000fffff;
+         code_blocks[pc2].start_pc = current_pc;
+         for (;;)
+         {
+            u16 instr = context->instruction = ((fetchfunc *)context->fetchlist)[(current_pc >> 20) & 0x0FF](context, current_pc);
+            jit_opcode_func func = decode(SHMT_SH1, instr);
+
+            func(instr, current_pc);
+
+            if (basic_block)
+               break;
+
+            current_pc += 2;
+         }
+
+         jit.End();
+
+         code_blocks[pc2].function = CMemoryFunction(stream.GetBuffer(), stream.GetSize());
+         code_blocks[pc2].end_pc = current_pc;
+
+      }
+
+      code_blocks[pc2].function(&context->jit);
    }
-
-   code_blocks[context->jit.pc / 2].function(&context->jit);
 }
 
 extern "C"

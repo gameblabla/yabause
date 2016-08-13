@@ -1221,6 +1221,9 @@ static int ISOCDInit(const char * iso) {
    FILE *iso_file;
    size_t num_read = 0;
 
+   if(iso == NULL)
+        return 0;
+
    memset(isoTOC, 0xFF, 0xCC * 2);
    memset(&disc, 0, sizeof(disc));
 
@@ -1235,6 +1238,16 @@ static int ISOCDInit(const char * iso) {
 
    num_read = fread((void *)header, 1, 6, iso_file);
    ext = strrchr(iso, '.');
+   if(!ext)   
+   {
+      imgtype = IMG_NONE;
+
+      if (iso_file)
+         fclose(iso_file);
+      iso_file = NULL;
+      return -1;
+   }   
+
 
    // Figure out what kind of image format we're dealing with
    if (stricmp(ext, ".CUE") == 0 && strncmp(header, "FILE \"", 6) == 0)

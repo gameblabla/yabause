@@ -535,7 +535,7 @@ void yab_mpeg_init()
   yab_mpeg.audio.context->channels = 2;
   yab_mpeg.audio.context->sample_rate = 44100;
 
-  ret = av_image_alloc(out_buf,out_linesize, 320, 240,PIX_FMT_RGB32, 1);
+  ret = av_image_alloc(out_buf,out_linesize, 320, 240,AV_PIX_FMT_RGB32, 1);
 
   if(!ret)
     assert(0);
@@ -561,7 +561,7 @@ void write_frame_to_video_buffer(struct YabCodec * c)
       //dest width, height, format
       out_width,
       out_height,
-      PIX_FMT_RGB32,
+      AV_PIX_FMT_RGB32,
       //flags
       SWS_BILINEAR,
       //source/dest filters

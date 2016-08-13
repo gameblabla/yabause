@@ -80,6 +80,7 @@ u8 *BupRam;
  * e.g. for implementing autosave of backup RAM. */
 u8 BupRamWritten;
 
+extern SH2_struct *CurrentSH2;
 //////////////////////////////////////////////////////////////////////////////
 
 u8 * T1MemoryInit(u32 size)
@@ -934,6 +935,16 @@ u32 FASTCALL MappedMemoryReadLongNocache(SH2_struct *sh, u32 addr)
    return 0;
 }
 
+u8 FASTCALL MappedMemoryReadByteNocacheCurrent(u32 addr) {
+      return MappedMemoryReadByteNocache(CurrentSH2, addr);
+}
+u16 FASTCALL MappedMemoryReadWordNocacheCurrent(u32 addr) {
+      return MappedMemoryReadWordNocache(CurrentSH2, addr);
+}
+u32 FASTCALL MappedMemoryReadLongNocacheCurrent(u32 addr) {
+      return MappedMemoryReadLongNocache(CurrentSH2, addr);
+}
+
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL MappedMemoryWriteByteCacheEnabled(SH2_struct *sh, u32 addr, u8 val) {
@@ -942,7 +953,7 @@ void FASTCALL MappedMemoryWriteByteCacheEnabled(SH2_struct *sh, u32 addr, u8 val
 #endif
    cache_memory_write_b(sh, &sh->onchip.cache, addr, val);
 }
-void FASTCALL MappedMemoryWriteByteNocache(SH2_struct *sh, u32 addr, u8 val)
+void FASTCALL MappedMemoryWriteByteNocache(SH2_struct *sh, u32 addr, u32/*u8*/ val)
 {
 #ifdef SH2_TRACE
    sh2_trace_writeb(addr, val);
@@ -1455,9 +1466,9 @@ int YabSaveStateStream(FILE *fp)
    glPixelZoom(1,1);
    glReadBuffer(GL_BACK);
    glReadPixels(0, 0, outputwidth, outputheight, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+   #endif
    #else
    memcpy(buf, dispbuffer, totalsize);
-   #endif
    #endif
    YuiSwapBuffers();
 

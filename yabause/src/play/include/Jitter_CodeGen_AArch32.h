@@ -549,6 +549,7 @@ namespace Jitter
 
 		//AND64
 		void									Emit_And64_MemMemMem(const STATEMENT&);
+		void									Emit_And64_MemMemCst(const STATEMENT&);
 
 		//SLL64
 		void									Emit_Sl64Var_MemMem(CSymbol*, CSymbol*, CAArch32Assembler::REGISTER);
