@@ -35,6 +35,11 @@ public:
 protected:
 	virtual void showEvent( QShowEvent* event );
 	virtual void resizeGL( int w, int h );
+	// mouse cursor
+	virtual void HandleMouseHiding();
+	virtual void CheckAndRestoreMouseCursor();
+	virtual void mouseMoveEvent(QMouseEvent * /*event*/);
+	int hideMouseTimeout;
 };
 
 #endif // YABAUSEGL_H
