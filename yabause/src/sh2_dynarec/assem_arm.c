@@ -24,8 +24,6 @@ ALIGNED(8) extern u32 mini_ht_master[32][2];
 ALIGNED(8) extern u32 mini_ht_slave[32][2];
 ALIGNED(4) extern u8 restore_candidate[512];
 
-extern SH2_struct *CurrentSH2;
-
 void FASTCALL WriteInvalidateLong(u32 addr, u32 val);
 void FASTCALL WriteInvalidateWord(u32 addr, u32 val);
 void FASTCALL WriteInvalidateByte(u32 addr, u32 val);
@@ -569,7 +567,7 @@ void alloc_arm_reg(struct regstat *cur,int i,signed char reg,char hr)
 }
 
 // Alloc cycle count into dedicated register
-void alloc_cc(struct regstat *cur,int i)
+alloc_cc(struct regstat *cur,int i)
 {
   alloc_arm_reg(cur,i,CCREG,HOST_CCREG);
 }
@@ -2738,7 +2736,7 @@ void literal_pool_jumpover(int n)
   set_jump_target(jaddr,(int)out);
 }
 
-void emit_extjump(pointer addr, int target)
+emit_extjump(pointer addr, int target)
 {
   u8 *ptr=(u8 *)addr;
   assert((ptr[3]&0x0e)==0xa);
@@ -2758,7 +2756,7 @@ void emit_extjump(pointer addr, int target)
   emit_jmp((pointer)dyna_linker);
 }
 
-void do_readstub(int n)
+do_readstub(int n)
 {
   assem_debug("do_readstub %x\n",start+stubs[n][3]*2);
   literal_pool(256);
@@ -2793,11 +2791,11 @@ void do_readstub(int n)
     emit_loadreg(CCREG,2);
   }
   if(type==LOADB_STUB)
-    emit_call((int)MappedMemoryReadByteNocacheCurrent);
+    emit_call((int)MappedMemoryReadByte);
   if(type==LOADW_STUB)
-    emit_call((int)MappedMemoryReadWordNocacheCurrent);
+    emit_call((int)MappedMemoryReadWord);
   if(type==LOADL_STUB)
-    emit_call((int)MappedMemoryReadLongNocacheCurrent);
+    emit_call((int)MappedMemoryReadLong);
   if(type==LOADS_STUB)
   {
     // RTE instruction, pop PC and SR from stack
@@ -2805,7 +2803,7 @@ void do_readstub(int n)
     assert(pc>=0);
     if(rs<4||rs==12)
       emit_writeword(rs,(int)&dynarec_local+24);
-    emit_call((int)MappedMemoryReadLongNocacheCurrent);
+    emit_call((int)MappedMemoryReadLong);
     if(rs==1||rs==2||rs==3||rs==12)
       emit_readword((int)&dynarec_local+24,rs);
     if(pc==0) {
@@ -2823,7 +2821,7 @@ void do_readstub(int n)
       }else
         emit_addimm(rs,4,0);
     }
-    emit_call((int)MappedMemoryReadLongNocacheCurrent);
+    emit_call((int)MappedMemoryReadLong);
     assert(rt>=0);
     if(rt!=0) emit_mov(0,rt);
     if(pc<4||pc==12)
@@ -2846,7 +2844,7 @@ void do_readstub(int n)
   emit_jmp(stubs[n][2]); // return address
 }
 
-void inline_readstub(int type, int i, u32 addr, signed char regmap[], int target, int adj, u32 reglist)
+inline_readstub(int type, int i, u32 addr, signed char regmap[], int target, int adj, u32 reglist)
 {
   assem_debug("inline_readstub\n");
   //int rs=get_reg(regmap,target);
@@ -2859,14 +2857,13 @@ void inline_readstub(int type, int i, u32 addr, signed char regmap[], int target
   //if(addr<0) addr=get_reg(i_regmap,-1);
   //assert(addr>=0);
   save_regs(reglist);
-  emit_movimm(addr,1);
-  emit_movimm(CurrentSH2, 0); //NEW API
+  emit_movimm(addr,0);
   if(type==LOADB_STUB)
-    emit_call((int)MappedMemoryReadByteNocache);
+    emit_call((int)MappedMemoryReadByte);
   if(type==LOADW_STUB)
-    emit_call((int)MappedMemoryReadWordNocache);
+    emit_call((int)MappedMemoryReadWord);
   if(type==LOADL_STUB)
-    emit_call((int)MappedMemoryReadLongNocache);
+    emit_call((int)MappedMemoryReadLong);
   assert(type!=LOADS_STUB);
   if(type==LOADB_STUB)
   {
@@ -2884,7 +2881,7 @@ void inline_readstub(int type, int i, u32 addr, signed char regmap[], int target
   restore_regs(reglist);
 }
 
-void do_writestub(int n)
+do_writestub(int n)
 {
   assem_debug("do_writestub %x\n",start+stubs[n][3]*2);
   literal_pool(256);
@@ -2939,7 +2936,7 @@ void do_writestub(int n)
   emit_jmp(stubs[n][2]); // return address
 }
 
-void inline_writestub(int type, int i, u32 addr, signed char regmap[], int target, int adj, u32 reglist)
+inline_writestub(int type, int i, u32 addr, signed char regmap[], int target, int adj, u32 reglist)
 {
   assem_debug("inline_writestub\n");
   //int rs=get_reg(regmap,-1);
@@ -2959,7 +2956,7 @@ void inline_writestub(int type, int i, u32 addr, signed char regmap[], int targe
   restore_regs(reglist);
 }
 
-void do_rmwstub(int n)
+do_rmwstub(int n)
 {
   assem_debug("do_rmwstub %x\n",start+stubs[n][3]*2);
   set_jump_target(stubs[n][1],(int)out);
@@ -2983,7 +2980,7 @@ void do_rmwstub(int n)
     emit_writeword(0,(int)&dynarec_local+24);
   
   //if(i_regmap[HOST_CCREG]==CCREG) emit_storereg(CCREG,HOST_CCREG);//DEBUG
-  emit_call((int)MappedMemoryReadByteNocacheCurrent);
+  emit_call((int)MappedMemoryReadByte);
   //emit_mov(0,1);
   if(type==RMWA_STUB)
     emit_andimm(0,imm[i],1);
@@ -3016,7 +3013,7 @@ void do_rmwstub(int n)
   emit_jmp(stubs[n][2]); // return address
 }
 
-void do_unalignedwritestub(int n)
+do_unalignedwritestub(int n)
 {
   set_jump_target(stubs[n][1],(int)out);
   output_w32(0xef000000);
@@ -3087,7 +3084,7 @@ int do_map_r_branch(int map, int c, u32 addr, int *jaddr)
   return map;
 }
 
-void gen_tlb_addr_r(int ar, int map) {
+int gen_tlb_addr_r(int ar, int map) {
   if(map>=0) {
     assem_debug("add %s,%s,%s lsl #2\n",regname[ar],regname[ar],regname[map]);
     output_w32(0xe0800100|rd_rn_rm(ar,ar,map));
@@ -3119,7 +3116,7 @@ int do_map_w(int s,int ar,int map,int cache,int x,int c,u32 addr)
   }
   return map;
 }
-void do_map_w_branch(int map, int c, u32 addr, int *jaddr)
+int do_map_w_branch(int map, int c, u32 addr, int *jaddr)
 {
   if(!c||can_direct_write(addr)) {
     emit_testimm(map,0x40000000);
@@ -3128,7 +3125,7 @@ void do_map_w_branch(int map, int c, u32 addr, int *jaddr)
   }
 }
 
-void gen_tlb_addr_w(int ar, int map) {
+int gen_tlb_addr_w(int ar, int map) {
   if(map>=0) {
     assem_debug("add %s,%s,%s lsl #2\n",regname[ar],regname[ar],regname[map]);
     output_w32(0xe0800100|rd_rn_rm(ar,ar,map));
@@ -3144,7 +3141,7 @@ int gen_orig_addr_w(int ar, int map) {
 }
 
 // Generate the address of the memory_map entry, relative to dynarec_local
-void generate_map_const(u32 addr,int reg) {
+generate_map_const(u32 addr,int reg) {
   //printf("generate_map_const(%x,%s)\n",addr,regname[reg]);
   emit_movimm((addr>>12)+(((u32)memory_map-(u32)&dynarec_local)>>2),reg);
 }

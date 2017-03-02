@@ -56,8 +56,8 @@ SH2Interface_struct *SH2Core=NULL;
 extern SH2Interface_struct *SH2CoreList[];
 
 void OnchipReset(SH2_struct *context);
-void FRTExec(SH2_struct *sh, u32 cycles);
-void WDTExec(SH2_struct *sh, u32 cycles);
+void FRTExec(/*SH2_struct *sh,*/ u32 cycles);
+void WDTExec(/*SH2_struct *sh,*/ u32 cycles);
 u8 SCIReceiveByte(void);
 void SCITransmitByte(u8);
 
@@ -297,9 +297,9 @@ void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
    if(context->model == SHMT_SH1)
       sh1_onchip_run_cycles(cycles);
    else
-      FRTExec(context, cycles);
+      FRTExec(/*context,*/ cycles);
 
-   WDTExec(context, cycles);
+   WDTExec(/*context,*/ cycles);
 
    if (context->model == SHMT_SH2 && yabsys.use_sh2_dma_timing)
       sh2_dma_exec(context, cycles);
@@ -1979,13 +1979,14 @@ void FASTCALL DataArrayWriteLong(SH2_struct *sh, u32 addr, u32 val)  {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FRTExec(SH2_struct *sh, u32 cycles)
+void FRTExec(/*SH2_struct *sh,*/ u32 cycles)
 {
    u32 frcold;
    u32 frctemp;
    u32 mask;
 
-   CurrentSH2 = sh;  //SEB Just in case
+   //CurrentSH2 = sh;  //SEB Just in case
+   SH2_struct *sh = CurrentSH2;
 
    frcold = frctemp = (u32)sh->onchip.FRC.all;
    mask = (1 << sh->frc.shift) - 1;
@@ -2039,11 +2040,12 @@ void FRTExec(SH2_struct *sh, u32 cycles)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void WDTExec(SH2_struct *sh, u32 cycles) {
+void WDTExec(/*SH2_struct *sh,*/ u32 cycles) {
    u32 wdttemp;
    u32 mask;
 
-   CurrentSH2 = sh;  //SEB Just in case
+   //CurrentSH2 = sh;  //SEB Just in case
+   SH2_struct *sh = CurrentSH2;
 
    if (!sh->wdt.isenable || sh->onchip.WTCSR & 0x80 || sh->onchip.RSTCSR & 0x80)
       return;

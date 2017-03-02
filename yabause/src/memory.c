@@ -935,14 +935,23 @@ u32 FASTCALL MappedMemoryReadLongNocache(SH2_struct *sh, u32 addr)
    return 0;
 }
 
-u8 FASTCALL MappedMemoryReadByteNocacheCurrent(u32 addr) {
+u8 FASTCALL MappedMemoryReadByte(u32 addr) {
       return MappedMemoryReadByteNocache(CurrentSH2, addr);
 }
-u16 FASTCALL MappedMemoryReadWordNocacheCurrent(u32 addr) {
+u16 FASTCALL MappedMemoryReadWord(u32 addr) {
       return MappedMemoryReadWordNocache(CurrentSH2, addr);
 }
-u32 FASTCALL MappedMemoryReadLongNocacheCurrent(u32 addr) {
+u32 FASTCALL MappedMemoryReadLong(u32 addr) {
       return MappedMemoryReadLongNocache(CurrentSH2, addr);
+}
+void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val) {
+      MappedMemoryWriteByteNocache(CurrentSH2, addr, val);
+}
+void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val) {
+      MappedMemoryWriteWordNocache(CurrentSH2, addr, val);
+}
+void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val) {
+      MappedMemoryWriteLongNocache(CurrentSH2, addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -953,7 +962,7 @@ void FASTCALL MappedMemoryWriteByteCacheEnabled(SH2_struct *sh, u32 addr, u8 val
 #endif
    cache_memory_write_b(sh, &sh->onchip.cache, addr, val);
 }
-void FASTCALL MappedMemoryWriteByteNocache(SH2_struct *sh, u32 addr, u32/*u8*/ val)
+void FASTCALL MappedMemoryWriteByteNocache(SH2_struct *sh, u32 addr, u8 val)
 {
 #ifdef SH2_TRACE
    sh2_trace_writeb(addr, val);

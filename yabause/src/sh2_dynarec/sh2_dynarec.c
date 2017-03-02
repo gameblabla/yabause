@@ -270,7 +270,7 @@ void *get_addr(u32 vaddr)
     if(head->vaddr==vaddr) {
   //printf("TRACE: count=%d next=%d (get_addr match %x: %x)\n",Count,next_interupt,vaddr,(int)head->addr);
   //printf("TRACE: (get_addr match %x: %x)\n",vaddr,(int)head->addr);
-      u32 *ht_bin=hash_table[((vaddr>>16)^vaddr)&0xFFFF];
+      int *ht_bin=hash_table[((vaddr>>16)^vaddr)&0xFFFF];
       ht_bin[3]=ht_bin[1];
       ht_bin[2]=ht_bin[0];
       ht_bin[1]=(int)head->addr;
@@ -286,9 +286,9 @@ void *get_addr(u32 vaddr)
       //printf("TRACE: count=%d next=%d (get_addr match dirty %x: %x)\n",Count,next_interupt,vaddr,(int)head->addr);
       // Don't restore blocks which are about to expire from the cache
       if((((u32)head->addr-(u32)out)<<(32-TARGET_SIZE_2))>0x60000000+(MAX_OUTPUT_BLOCK_SIZE<<(32-TARGET_SIZE_2)))
-      if(verify_dirty((pointer)head->addr)) {
+      if(verify_dirty(head->addr)) {
         u32 start,end;
-        u32 *ht_bin;
+        int *ht_bin;
         //printf("restore candidate: %x (%d) d=%d\n",vaddr,page,(cached_code[vaddr>>15]>>((vaddr>>12)&7))&1);
         //invalid_code[vaddr>>12]=0;
         cached_code[vaddr>>15]|=1<<((vaddr>>12)&7);
@@ -345,7 +345,7 @@ void *get_addr_ht(u32 vaddr)
 {
   //printf("TRACE: count=%d next=%d (get_addr_ht %x)\n",Count,next_interupt,vaddr);
   //if(vaddr>>12==0x60a0) printf("TRACE: (get_addr_ht %x)\n",vaddr);
-  u32 *ht_bin=hash_table[((vaddr>>16)^vaddr)&0xFFFF];
+  int *ht_bin=hash_table[((vaddr>>16)^vaddr)&0xFFFF];
   //if(vaddr>>12==0x60a0) printf("%x %x %x %x\n",ht_bin[0],ht_bin[1],ht_bin[2],ht_bin[3]);
   if(ht_bin[0]==vaddr) return (void *)ht_bin[1];
   if(ht_bin[2]==vaddr) return (void *)ht_bin[3];
@@ -797,7 +797,7 @@ void *check_addr(u32 vaddr)
 void remove_hash(int vaddr)
 {
   //printf("remove hash: %x\n",vaddr);
-  u32 *ht_bin=hash_table[(((vaddr)>>16)^vaddr)&0xFFFF];
+  int *ht_bin=hash_table[(((vaddr)>>16)^vaddr)&0xFFFF];
   if(ht_bin[2]==vaddr) {
     ht_bin[2]=ht_bin[3]=-1;
   }
@@ -833,7 +833,7 @@ void ll_clear(struct ll_entry **head)
 {
   struct ll_entry *cur;
   struct ll_entry *next;
-  if((cur=*head)) {
+  if(cur=*head) {
     *head=0;
     while(cur) {
       next=cur->next;
@@ -1079,7 +1079,7 @@ void clean_blocks(u32 page)
           if(!inv) {
             void * clean_addr=(void *)get_clean_addr((int)head->addr);
             if((((u32)clean_addr-(u32)out)<<(32-TARGET_SIZE_2))>0x60000000+(MAX_OUTPUT_BLOCK_SIZE<<(32-TARGET_SIZE_2))) {
-              u32 *ht_bin;
+              int *ht_bin;
               inv_debug("INV: Restored %x (%x/%x)\n",head->vaddr, (int)head->addr, (int)clean_addr);
               //printf("page=%x, addr=%x\n",page,head->vaddr);
               //assert(head->vaddr>>12==(page|0x80000));
@@ -1107,7 +1107,7 @@ void clean_blocks(u32 page)
 }
 
 
-void do_consts(int i,u32 *isconst,u32 *constmap)
+do_consts(int i,u32 *isconst,u32 *constmap)
 {
   switch(itype[i]) {
     case LOAD:
@@ -1789,7 +1789,7 @@ void delayslot_alloc(struct regstat *current,int i)
   }
 }
 
-void add_stub(int type,int addr,int retaddr,int a,int b,int c,int d,int e)
+add_stub(int type,int addr,int retaddr,int a,int b,int c,int d,int e)
 {
   stubs[stubcount][0]=type;
   stubs[stubcount][1]=addr;
@@ -1830,7 +1830,7 @@ void wb_register(signed char r,signed char regmap[],u32 dirty)
   }
   return sum;
 }
-int rchecksum()
+/*int rchecksum()
 {
   int i;
   int sum=0;
@@ -1838,15 +1838,15 @@ int rchecksum()
     sum^=((u_int *)reg)[i];
   return sum;
 }
-int fchecksum()
+/*int fchecksum()
 {
   int i;
   int sum=0;
   for(i=0;i<64;i++)
     sum^=((u_int *)reg_cop1_fgr_64)[i];
   return sum;
-}
-void rlist()
+}*/
+/*void rlist()
 {
   int i;
   printf("TRACE: ");
@@ -2371,7 +2371,7 @@ void load_assemble(int i,struct regstat *i_regs)
     emit_call((int)memdebug);
     //emit_popa();
     restore_regs(0x100f);
-  }*/
+  }/**/
 }
 
 void store_assemble(int i,struct regstat *i_regs)
@@ -2518,7 +2518,7 @@ void store_assemble(int i,struct regstat *i_regs)
     emit_call((int)memdebug);
     //emit_popa();
     restore_regs(0x100f);
-  }*/
+  }/**/
 }
 
 void rmw_assemble(int i,struct regstat *i_regs)
@@ -3709,7 +3709,7 @@ void do_ccstub(int n)
   emit_jmp(stubs[n][2]); // return address
 }
 
-void add_to_linker(int addr,int target,int ext)
+add_to_linker(int addr,int target,int ext)
 {
   link_addr[linkcount][0]=addr;
   link_addr[linkcount][1]=target|slave;
@@ -5044,7 +5044,7 @@ void clean_registers(int istart,int iend,int wr)
             if(r!=EXCLUDE_REG) {
               if(regs[i].regmap[r]==regmap_pre[i+2][r]) {
                 regs[i+2].wasdirty&=wont_dirty_i|~(1<<r);
-              }else {/*printf("i: %x (%d) mismatch(+2): %d\n",start+i*4,i,r);assert(!((wont_dirty_i>>r)&1));*/}
+              }else {/*printf("i: %x (%d) mismatch(+2): %d\n",start+i*4,i,r);/*assert(!((wont_dirty_i>>r)&1));*/}
             }
           }
         }
@@ -5056,7 +5056,7 @@ void clean_registers(int istart,int iend,int wr)
             if(r!=EXCLUDE_REG) {
               if(regs[i].regmap[r]==regmap_pre[i+1][r]) {
                 regs[i+1].wasdirty&=wont_dirty_i|~(1<<r);
-              }else {/*printf("i: %x (%d) mismatch(+1): %d\n",start+i*4,i,r);assert(!((wont_dirty_i>>r)&1));*/}
+              }else {/*printf("i: %x (%d) mismatch(+1): %d\n",start+i*4,i,r);/*assert(!((wont_dirty_i>>r)&1));*/}
             }
           }
         }
@@ -5098,7 +5098,7 @@ void clean_registers(int istart,int iend,int wr)
             wont_dirty_i|=((unneeded_reg[i]>>(regmap_pre[i][r]&63))&1)<<r;
           } else {
             wont_dirty_i|=1<<r;
-            /*printf("i: %x (%d) mismatch: %d\n",start+i*4,i,r);assert(!((will_dirty>>r)&1));*/
+            /*printf("i: %x (%d) mismatch: %d\n",start+i*4,i,r);/*assert(!((will_dirty>>r)&1));*/
           }
         }
       }
@@ -5206,8 +5206,8 @@ void disassemble_inst(int i)
         printf (" %x: %s r%d,r%d\n",start+i*2,insn[i],rs1[i],rs2[i]);
         break;
       case SHIFTIMM:
-        if(rs2[i]>=0) printf (" %x: %s r%d,r%d #%d\n",start+i*2,insn[i],rs1[i],rs2[i],imm[i]);
-        else printf (" %x: %s r%d #%d\n",start+i*2,insn[i],rt1[i],imm[i]);
+        if(rs2[i]>=0) printf (" %x: %s r%d,r%d\n",start+i*2,insn[i],rs1[i],rs2[i],imm[i]);
+        else printf (" %x: %s r%d\n",start+i*2,insn[i],rt1[i],imm[i]);
         break;
       case MOV:
         printf (" %x: %s r%d,r%d\n",start+i*2,insn[i],rs1[i],rt1[i]);
@@ -8000,7 +8000,7 @@ int sh2_recompile_block(int addr)
 
   /* Pass 9 - Linker */
   {
-  u32 *ht_bin;
+  int *ht_bin;
   int entry_point;
   u32 alignedlen;
   u32 alignedstart;
@@ -8131,7 +8131,7 @@ int sh2_recompile_block(int addr)
       case 2:
         // Clear hash table
         for(i=0;i<32;i++) {
-          u32 *ht_bin=hash_table[((expirep&2047)<<5)+i];
+          int *ht_bin=hash_table[((expirep&2047)<<5)+i];
           if((ht_bin[3]>>shift)==(base>>shift) ||
              ((ht_bin[3]-MAX_OUTPUT_BLOCK_SIZE)>>shift)==(base>>shift)) {
             inv_debug("EXP: Remove hash %x -> %x\n",ht_bin[2],ht_bin[3]);
@@ -8174,12 +8174,12 @@ void DynarecMasterHandleInterrupts()
   if (MSH2->interrupts[MSH2->NumberOfInterrupts-1].level > ((master_reg[SR]>>4)&0xF))
   {
     master_reg[15] -= 4;
-    MappedMemoryWriteLongNocache(MSH2, master_reg[15], master_reg[SR]);
+    MappedMemoryWriteLong(master_reg[15], master_reg[SR]);
     master_reg[15] -= 4;
-    MappedMemoryWriteLongNocache(MSH2, master_reg[15], master_pc);
+    MappedMemoryWriteLong(master_reg[15], master_pc);
     master_reg[SR] &= 0xFFFFFF0F;
     master_reg[SR] |= (MSH2->interrupts[MSH2->NumberOfInterrupts-1].level)<<4;
-    master_pc = MappedMemoryReadLongNocache(MSH2, master_reg[VBR] + (MSH2->interrupts[MSH2->NumberOfInterrupts-1].vector << 2));
+    master_pc = MappedMemoryReadLong(master_reg[VBR] + (MSH2->interrupts[MSH2->NumberOfInterrupts-1].vector << 2));
     master_ip = get_addr_ht(master_pc);
     MSH2->NumberOfInterrupts--;
     MSH2->isIdle = 0;
@@ -8195,12 +8195,12 @@ void DynarecSlaveHandleInterrupts()
   if (SSH2->interrupts[SSH2->NumberOfInterrupts-1].level > ((slave_reg[SR]>>4)&0xF))
   {
     slave_reg[15] -= 4;
-    MappedMemoryWriteLongNocache(SSH2, slave_reg[15], slave_reg[SR]);
+    MappedMemoryWriteLong(slave_reg[15], slave_reg[SR]);
     slave_reg[15] -= 4;
-    MappedMemoryWriteLongNocache(SSH2, slave_reg[15], slave_pc);
+    MappedMemoryWriteLong(slave_reg[15], slave_pc);
     slave_reg[SR] &= 0xFFFFFF0F;
     slave_reg[SR] |= (SSH2->interrupts[SSH2->NumberOfInterrupts-1].level)<<4;
-    slave_pc = MappedMemoryReadLongNocache(SSH2, slave_reg[VBR] + (SSH2->interrupts[SSH2->NumberOfInterrupts-1].vector << 2));
+    slave_pc = MappedMemoryReadLong(slave_reg[VBR] + (SSH2->interrupts[SSH2->NumberOfInterrupts-1].vector << 2));
     slave_ip = get_addr_ht(slave_pc|1);
     SSH2->NumberOfInterrupts--;
     SSH2->isIdle = 0;
@@ -8210,13 +8210,15 @@ void DynarecSlaveHandleInterrupts()
   //printf("master_cc=%d slave_cc=%d\n",master_cc,slave_cc);
 }
 
+#define SH2CORE_DYNAREC 2
+
 void SH2InterpreterSendInterrupt(SH2_struct *context, u8 level, u8 vector);
 int SH2InterpreterGetInterrupts(SH2_struct *context,
                                 interrupt_struct interrupts[MAX_INTERRUPTS]);
 void SH2InterpreterSetInterrupts(SH2_struct *context, int num_interrupts,
                                  const interrupt_struct interrupts[MAX_INTERRUPTS]);
 
-int SH2DynarecInit(enum SHMODELTYPE model, SH2_struct *msh, SH2_struct *ssh) {return 0;}
+int SH2DynarecInit(void) {return 0;}
 
 void SH2DynarecDeInit() {
   sh2_dynarec_cleanup();

@@ -115,7 +115,7 @@ memory_map = restore_candidate + 512
 	.size	memory_map, 4194304
 
 	.text
-	.align	4
+	.align	2
 	.global	YabauseDynarecOneFrameExec
 	.type	YabauseDynarecOneFrameExec, %function
 YabauseDynarecOneFrameExec:
@@ -226,15 +226,11 @@ master_handle_interrupts:
 	.global	slave_entry
 	.type	slave_entry, %function
 slave_entry:
-	ldr r0, .csh2ptr
-	ldr	r1, [fp, #sh2cycles-dynarec_local]
+	ldr	r0, [fp, #sh2cycles-dynarec_local]
 	str	r10, [fp, #master_cc-dynarec_local]
 	str	r14, [fp, #master_ip-dynarec_local]
-	ldr r0, [r0]
 	bl	FRTExec
-	ldr r0, .csh2ptr
-	ldr	r1, [fp, #sh2cycles-dynarec_local]
-	ldr r0, [r0]
+	ldr	r0, [fp, #sh2cycles-dynarec_local]
 	bl	WDTExec
 	ldr	r4, [fp, #slave_ip-dynarec_local]
 	/*movw	r7, #:lower16:SSH2*/
@@ -268,15 +264,11 @@ slave_handle_interrupts:
 	.global	cc_interrupt
 	.type	cc_interrupt, %function
 cc_interrupt:
-	ldr r0, .csh2ptr
-	ldr	r1, [fp, #sh2cycles-dynarec_local]
-	ldr r0, [r0]
+	ldr	r0, [fp, #sh2cycles-dynarec_local]
 	str	r10, [fp, #slave_cc-dynarec_local]
 	str	r8, [fp, #slave_ip-dynarec_local]
 	bl	FRTExec
-	ldr r0, .csh2ptr
-	ldr	r1, [fp, #sh2cycles-dynarec_local]
-	ldr r0, [r0]
+	ldr	r0, [fp, #sh2cycles-dynarec_local]
 	bl	WDTExec
 	.size	cc_interrupt, .-cc_interrupt
 	.global	cc_interrupt_master
@@ -431,7 +423,7 @@ vblankin:
 	b	nextline
 	.size	cc_interrupt_master, .-cc_interrupt_master
 
-	.align	4
+	.align	2
 	.global	dyna_linker
 	.type	dyna_linker, %function
 dyna_linker:
@@ -519,7 +511,7 @@ dyna_linker:
 	.word	jump_dirty
 .htptr:
 	.word	hash_table
-	.align	4
+	.align	2
 	.global	jump_vaddr_r0_master
 	.type	jump_vaddr_r0_master, %function
 jump_vaddr_r0_master:
@@ -693,7 +685,7 @@ jump_vaddr:
 	bl	get_addr
 	mov	pc, r0
 	.size	jump_vaddr, .-jump_vaddr
-	.align	4
+	.align	2
 	.global	verify_code
 	.type	verify_code, %function
 verify_code:
@@ -730,7 +722,7 @@ verify_code:
 	mov	pc, r0
 	.size	verify_code, .-verify_code
 
-	.align	4
+	.align	2
 	.global	WriteInvalidateLong
 	.type	WriteInvalidateLong, %function
 WriteInvalidateLong:
@@ -742,18 +734,13 @@ WriteInvalidateLong:
 	ldr	r2, [r12, r2, lsl #2]
 	mov	r12, #1
 	tst	r12, r2, ror r3
-	beq	MappedMemoryWriteLongNocacheGo
+	beq	MappedMemoryWriteLong
 	push	{r0, r1, r2, lr}
 	bl	invalidate_addr
 	pop	{r0, r1, r2, lr}
-MappedMemoryWriteLongNocacheGo:
-	mov r2, r1	/* new API needs r0 as current SH2 pointer */
-	mov r1, r0
-	ldr	r0, .csh2ptr
-	ldr r0, [r0]
-	b	MappedMemoryWriteLongNocache
+	b	MappedMemoryWriteLong
 	.size	WriteInvalidateLong, .-WriteInvalidateLong
-	.align	4
+	.align	2
 	.global	WriteInvalidateWord
 	.type	WriteInvalidateWord, %function
 WriteInvalidateWord:
@@ -769,18 +756,13 @@ WriteInvalidateWord:
 	/*uxth	r1, r1*/
 	bic	r1, r1, #0xFF0000
 	tst	r12, r2, ror r3
-	beq	MappedMemoryWriteWordNocacheGo
+	beq	MappedMemoryWriteWord
 	push	{r0, r1, r2, lr}
 	bl	invalidate_addr
 	pop	{r0, r1, r2, lr}
-MappedMemoryWriteWordNocacheGo:
-	mov r2, r1	/* new API needs r0 as current SH2 pointer */
-	mov r1, r0
-	ldr	r0, .csh2ptr
-	ldr r0, [r0]
-	b	MappedMemoryWriteWordNocache
+	b	MappedMemoryWriteWord
 	.size	WriteInvalidateWord, .-WriteInvalidateWord
-	.align	4
+	.align	2
 	.global	WriteInvalidateByteSwapped
 	.type	WriteInvalidateByteSwapped, %function
 WriteInvalidateByteSwapped:
@@ -798,19 +780,14 @@ WriteInvalidateByte:
 	mov	r12, #1
 	and	r1, r1, #0xff
 	tst	r12, r2, ror r3
-	beq	MappedMemoryWriteByteNocacheGo
+	beq	MappedMemoryWriteByte
 	push	{r0, r1, r2, lr}
 	bl	invalidate_addr
 	pop	{r0, r1, r2, lr}
-MappedMemoryWriteByteNocacheGo:
-	mov r2, r1	/* new API needs r0 as current SH2 pointer */
-	mov r1, r0
-	ldr	r0, .csh2ptr
-	ldr r0, [r0]
-	b	MappedMemoryWriteByteNocache
+	b	MappedMemoryWriteByte
 	.size	WriteInvalidateByte, .-WriteInvalidateByte
 
-	.align	4
+	.align	2
 	.global	div1
 	.type	div1, %function
 div1:
@@ -872,7 +849,7 @@ div1_negative_divisor:
 	mov	pc, lr
 	.size	div1, .-div1
 
-	.align	4
+	.align	2
 	.global	macl
 	.type	macl, %function
 macl:
@@ -884,15 +861,11 @@ macl:
 	mov	r7, r14
 	mov	r8, r0 /* MACL */
 	mov	r9, r1 /* MACH */
-	ldr r0, .csh2ptr
-	mov	r1, r6 /* New API, needs curretn sh2 in r0 */
-	ldr r0, [r0]
-	bl	MappedMemoryReadLongNocache
+	mov	r0, r6
+	bl	MappedMemoryReadLong
 	mov	r10, r0
-	ldr r0, .csh2ptr
-	mov	r1, r5
-	ldr r0, [r0]
-	bl	MappedMemoryReadLongNocache
+	mov	r0, r5
+	bl	MappedMemoryReadLong
 	add	r5, r5, #4
 	add	r6, r6, #4
 	mov	r12, r0
@@ -913,7 +886,7 @@ macl_saturation:
 	mov	pc, lr
 	.size	macl, .-macl
 
-	.align	4
+	.align	2
 	.global	macw
 	.type	macw, %function
 macw:
@@ -925,16 +898,12 @@ macw:
 	mov	r7, r14
 	mov	r8, r0 /* MACL */
 	mov	r9, r1 /* MACH */
-	ldr r0, .csh2ptr
-	mov	r1, r6
-	ldr r0, [r0]
-	bl	MappedMemoryReadWordNocache
+	mov	r0, r6
+	bl	MappedMemoryReadWord
 	/*sxth	r10, r0*/
 	lsl	r10, r0, #16
-	ldr r0, .csh2ptr
-	mov	r1, r5
-	ldr r0, [r0]
-	bl	MappedMemoryReadWordNocache
+	mov	r0, r5
+	bl	MappedMemoryReadWord
 	add	r5, r5, #2
 	add	r6, r6, #2
 	lsl	r12, r0, #16
@@ -956,7 +925,7 @@ macw_saturation:
 	mov	pc, lr
 	.size	macw, .-macw
 
-	.align	4
+	.align	2
 	.global	master_handle_bios
 	.type	master_handle_bios, %function
 master_handle_bios:
@@ -973,7 +942,7 @@ master_handle_bios:
 	mov	pc, lr
 	.size	master_handle_bios, .-master_handle_bios
 
-	.align	4
+	.align	2
 	.global	slave_handle_bios
 	.type	slave_handle_bios, %function
 slave_handle_bios:
@@ -991,7 +960,7 @@ slave_handle_bios:
 	.size	slave_handle_bios, .-slave_handle_bios
 
 /* __clear_cache syscall for Linux OS with broken libraries */
-	.align	4
+	.align	2
 	.global	clear_cache
 	.type	clear_cache, %function
 clear_cache:
@@ -1003,7 +972,7 @@ clear_cache:
 	pop	{r7, pc}
 	.size	clear_cache, .-clear_cache
 
-	.align	4
+	.align	2
 	.global	breakpoint
 	.type	breakpoint, %function
 breakpoint:

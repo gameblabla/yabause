@@ -352,12 +352,16 @@ void FASTCALL MappedMemoryWriteLongCacheEnabled(SH2_struct *sh, u32 addr, u32 va
 u8 FASTCALL MappedMemoryReadByteNocache(SH2_struct *sh, u32 addr);
 u16 FASTCALL MappedMemoryReadWordNocache(SH2_struct *sh, u32 addr);
 u32 FASTCALL MappedMemoryReadLongNocache(SH2_struct *sh, u32 addr);
-void FASTCALL MappedMemoryWriteByteNocache(SH2_struct *sh, u32 addr, /*u8*/u32 val);
+void FASTCALL MappedMemoryWriteByteNocache(SH2_struct *sh, u32 addr, u8 val);
 void FASTCALL MappedMemoryWriteWordNocache(SH2_struct *sh, u32 addr, u16 val);
 void FASTCALL MappedMemoryWriteLongNocache(SH2_struct *sh, u32 addr, u32 val);
-u8 FASTCALL MappedMemoryReadByteNocacheCurrent(u32 addr);
-u16 FASTCALL MappedMemoryReadWordNocacheCurrent(u32 addr);
-u32 FASTCALL MappedMemoryReadLongNocacheCurrent(u32 addr);
+u8 FASTCALL MappedMemoryReadByte(u32 addr);
+u16 FASTCALL MappedMemoryReadWord(u32 addr);
+u32 FASTCALL MappedMemoryReadLong(u32 addr);
+void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val);
+void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val);
+void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val);
+
 #ifdef __cplusplus
 }
 #endif
