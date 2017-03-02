@@ -2539,7 +2539,7 @@ int currentPixelIsVisible;
 int characterWidth;
 int characterHeight;
 
-static INLINE int getpixel(int linenumber, int currentlineindex, vdp1cmd_struct *cmd, u8 * ram) {
+static INLINE int getpixel(int linenumber, int currentlineindex, const vdp1cmd_struct *cmd, u8 * ram) {
 	u32 characterAddress;
 	u32 colorlut;
 	u16 colorbank;
@@ -2710,7 +2710,7 @@ static INLINE int IsSystemClipped(int x, int y, Vdp1* regs)
       y <= regs->systemclipY2);
 }
 
-int IsClipped(int x, int y, Vdp1* regs, vdp1cmd_struct * cmd)
+int IsClipped(int x, int y, Vdp1* regs, const vdp1cmd_struct * cmd)
 {
    if (cmd->CMDPMOD & 0x0400)//user clipping enabled
    {
@@ -2727,7 +2727,7 @@ int IsClipped(int x, int y, Vdp1* regs, vdp1cmd_struct * cmd)
    }
 }
 
-static INLINE void putpixel8(int x, int y, Vdp1 * regs, vdp1cmd_struct *cmd, u8 * back_framebuffer) {
+static INLINE void putpixel8(int x, int y, Vdp1 * regs, const vdp1cmd_struct *cmd, u8 * back_framebuffer) {
 
     int y2 = y / vdp1interlace;
     u8 * iPix = &back_framebuffer[(y2 * vdp1width) + x];
@@ -2762,7 +2762,7 @@ static INLINE void putpixel8(int x, int y, Vdp1 * regs, vdp1cmd_struct *cmd, u8 
     }
 }
 
-static INLINE void putpixel(int x, int y, Vdp1* regs, vdp1cmd_struct * cmd, u8 * back_framebuffer) {
+static INLINE void putpixel(int x, int y, Vdp1* regs, const vdp1cmd_struct * cmd, u8 * back_framebuffer) {
 	u16* iPix;
 	int mesh = cmd->CMDPMOD & 0x0100;
 	int SPD = ((cmd->CMDPMOD & 0x40) != 0);//show the actual color of transparent pixels if 1 (they won't be drawn transparent)
@@ -2851,7 +2851,7 @@ static INLINE void putpixel(int x, int y, Vdp1* regs, vdp1cmd_struct * cmd, u8 *
 }
 
 static INLINE int iterateOverLine(int x1, int y1, int x2, int y2, int greedy, void *data,
-   int(*line_callback)(int x, int y, int i, void *data, Vdp1* regs, vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer), Vdp1* regs, vdp1cmd_struct * cmd, u8 * ram, u8* back_framebuffer) {
+   int(*line_callback)(int x, int y, int i, void *data, Vdp1* regs, const vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer), Vdp1* regs, vdp1cmd_struct * cmd, u8 * ram, u8* back_framebuffer) {
 	int i, a, ax, ay, dx, dy;
 
 	a = i = 0;
@@ -2942,7 +2942,7 @@ typedef struct {
   int previousStep;
 } DrawLineData;
 
-static INLINE int DrawLineCallback(int x, int y, int i, void *data, Vdp1* regs, vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer)
+static INLINE int DrawLineCallback(int x, int y, int i, void *data, Vdp1* regs, const vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer)
 {
   int currentStep;
   DrawLineData *linedata = data;
@@ -2967,7 +2967,7 @@ static INLINE int DrawLineCallback(int x, int y, int i, void *data, Vdp1* regs, 
 
   return 0;
 }
-static INLINE int DrawLine16b(int x, int y, int i, void *data, Vdp1* regs, vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer)
+static INLINE int DrawLine16b(int x, int y, int i, void *data, Vdp1* regs, const vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer)
 {
   int currentStep;
   DrawLineData *linedata = data;
@@ -2989,7 +2989,7 @@ static INLINE int DrawLine16b(int x, int y, int i, void *data, Vdp1* regs, vdp1c
 
   return 0;
 }
-static INLINE int DrawLine8b(int x, int y, int i, void *data, Vdp1* regs, vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer)
+static INLINE int DrawLine8b(int x, int y, int i, void *data, Vdp1* regs, const vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer)
 {
   int currentStep;
   DrawLineData *linedata = data;
@@ -3012,7 +3012,7 @@ static INLINE int DrawLine8b(int x, int y, int i, void *data, Vdp1* regs, vdp1cm
   return 0;
 }
 
-static int iterateOverLine16b(int x1, int y1, int x2, int y2, int greedy, void *data, Vdp1* regs, vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer) {
+static int iterateOverLine16b(int x1, int y1, int x2, int y2, int greedy, void *data, Vdp1* regs, const vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer) {
   int i, a, ax, ay, dx, dy;
 
   a = i = 0;
@@ -3089,7 +3089,7 @@ static int iterateOverLine16b(int x1, int y1, int x2, int y2, int greedy, void *
   return i;
 }
 
-static int iterateOverLine8b(int x1, int y1, int x2, int y2, int greedy, void *data, Vdp1* regs, vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer) {
+static int iterateOverLine8b(int x1, int y1, int x2, int y2, int greedy, void *data, Vdp1* regs, const vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer) {
   int i, a, ax, ay, dx, dy;
 
   a = i = 0;
@@ -3166,7 +3166,7 @@ static int iterateOverLine8b(int x1, int y1, int x2, int y2, int greedy, void *d
   return i;
 }
 
-static int iterateOverLineFixed(int x1, int y1, int x2, int y2, int greedy, void *data, Vdp1* regs, vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer) {
+static int iterateOverLineFixed(int x1, int y1, int x2, int y2, int greedy, void *data, Vdp1* regs, const vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer) {
   int i, a, ax, ay, dx, dy;
 
   a = i = 0;
@@ -3244,7 +3244,7 @@ static int iterateOverLineFixed(int x1, int y1, int x2, int y2, int greedy, void
 }
 
 static int DrawLine( int x1, int y1, int x2, int y2, int greedy, myreal linenumber, myreal texturestep, myreal xredstep, myreal xgreenstep, myreal xbluestep, 
-   Vdp1* regs, vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer)
+   Vdp1* regs, const vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer)
 {
 	DrawLineData data;
 
@@ -3317,7 +3317,7 @@ int xright[1000];
 int yright[1000];
 
 static int
-storeLineCoords(int x, int y, int i, void *arrays, Vdp1* regs, vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer) {
+storeLineCoords(int x, int y, int i, void *arrays, Vdp1* regs, const vdp1cmd_struct * cmd, u8* ram, u8* back_framebuffer) {
 	int **intArrays = arrays;
 
 	intArrays[0][i] = x;
