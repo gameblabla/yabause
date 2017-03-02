@@ -26,8 +26,9 @@
 #endif
 #include "../debug.h"
 #include "../m68kcore.h"
-#include "../m68kc68k.h"
-
+#ifdef SH2_DYNAREC
+#include "../sh2_dynarec/sh2_dynarec.h"
+#endif
 
 #include "main.h"
 
@@ -41,6 +42,9 @@ static char cartpath[256] = "\0";
 
 M68K_struct * M68KCoreList[] = {
 &M68KDummy,
+#ifdef HAVE_MUSASHI
+&M68KMusashi,
+#endif
 #ifdef HAVE_C68K
 &M68KC68K,
 #endif
@@ -55,6 +59,9 @@ SH2Interface_struct *SH2CoreList[] = {
 &SH2DebugInterpreter,
 #ifdef SH2_DYNAREC
 &SH2Dynarec,
+#endif
+#ifdef HAVE_PLAY_JIT
+&SH2Jit,
 #endif
 NULL
 };
@@ -81,9 +88,7 @@ NULL
 
 SoundInterface_struct *SNDCoreList[] = {
 &SNDDummy,
-#ifdef HAVE_LIBSDL
 &SNDSDL,
-#endif
 #ifdef HAVE_LIBAL
 &SNDAL,
 #endif
@@ -110,23 +115,21 @@ NULL
 };
 #endif
 
-int YuiInit(int sh2core)   {
+int YuiInit(int sh2core, int sndcore)   {
     static yabauseinit_struct yinit;
     static void * padbits;
 
+	memset(&yinit, 0, sizeof(yinit));
     yinit.percoretype = PERCORE_DUMMY;
     yinit.sh2coretype = sh2core;
-    #ifdef HAVE_LIBGL
-    yinit.vidcoretype = VIDCORE_OGL;
-    #else
+	#ifdef HAVE_LIBGL
+	yinit.vidcoretype = VIDCORE_OGL;
+	#else
     yinit.vidcoretype = VIDCORE_SOFT;
-    #endif
-    yinit.m68kcoretype = M68KCORE_C68K;
-    #if defined(HAVE_LIBSDL) && defined(HAVE_LIBAL)
-    yinit.sndcoretype = 2;
-    #else        
-    yinit.sndcoretype = 1;
-    #endif
+	#endif
+    yinit.m68kcoretype = M68KCORE_MUSASHI;
+	yinit.sndcoretype = sndcore;
+	yinit.sh1coretype = SH2CORE_JIT;
     yinit.cdcoretype = CDCORE_ISO;
     yinit.carttype = CART_NONE;
     yinit.regionid = REGION_AUTODETECT;
@@ -138,6 +141,12 @@ int YuiInit(int sh2core)   {
     yinit.frameskip = 1;
     yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
     yinit.clocksync = 1;
+	yinit.play_ssf = 1;
+	yinit.use_new_scsp = 0;
+	yinit.usethreads = 1;
+	yinit.numthreads = 4;
+	yinit.use_scsp_dsp_dynarec = 1;
+	yinit.use_scu_dsp_jit = 1;
     yinit.basetime = 0;
 
 #ifdef HAVE_LIBGL
@@ -227,7 +236,7 @@ void YuiSwapBuffers(void)   {
 		const SDL_PixelFormat pixformat = {
 				.palette = NULL,
 				.BitsPerPixel = 16, .BytesPerPixel = 2,
-				.Rmask = 0x1f, .Gmask = 0x7e0, .Bmask = 0xf800, .Amask = 0,
+				.Rmask = 0xf800, .Gmask = 0x7e0, .Bmask = 0x1f, .Amask = 0,
 				.Rloss = 3, .Gloss = 2, .Bloss = 3, .Aloss = 0,
 				.Rshift = 11, .Gshift = 5, .Bshift = 0, .Ashift = 0,
 				.colorkey = 0, .alpha = 0
@@ -295,6 +304,8 @@ void print_help()
 
 	printf("-b|--bios filename\t: load filename as bios (" DEFAUL_BIOS " tried by default)\n");
 	printf("-i|--image filename\t: load filename as CD image\n");
+	printf("-c|--core n\t\t: use SH2 core #n (0=int, 1=debug, %d=dynarec, %d=jit)\n", SH2CORE_DYNAREC, SH2CORE_JIT);
+	printf("-s|--sound n\t\t: use Sound core #n (0=dummy, %d=sdl, %d=OpenAL)\n", SNDCORE_SDL, SNDCORE_AL);
 	printf("-h|--help\t\t: print this help\n");
 	printf("\n");
 
@@ -303,12 +314,14 @@ void print_help()
 
 int main(int argc, char *argv[])    {
     int core;
+	int snd;
     int parse_status;
 #ifdef SH2_DYNAREC
-    core = 2;
+    core = SH2CORE_DYNAREC;
 #else
-	core = SH2CORE_DEFAULT;
+	core = 0;
 #endif
+    snd = SNDCORE_SDL;
 	printf("Yabause for Pandora\n===================\n\n");
 
     // parse command lines arguments
@@ -319,7 +332,7 @@ int main(int argc, char *argv[])    {
 
     for (int i = 1; i < argc; i++) {
    		switch (parse_status) {
-   			case 0: printf("Error on command line (\"%s\")\n", argv[i]);
+   			case 0:
 		    	if (!strcmp(argv[i], "-h")) 
 		    		print_help();
 		    	else if(!strcmp(argv[i], "--help"))
@@ -332,6 +345,16 @@ int main(int argc, char *argv[])    {
 		    		parse_status = 1;
 		    	else if(!strcmp(argv[i], "--bios"))
 		    		parse_status = 1;
+				else if(!strcmp(argv[i], "-c"))
+					parse_status = 3;
+				else if(!strcmp(argv[i], "--core"))
+					parse_status = 3;
+				else if(!strcmp(argv[i], "-s"))
+					parse_status = 4;
+				else if(!strcmp(argv[i], "--sound"))
+					parse_status = 4;
+				else
+					printf("Error on command line (\"%s\")\n", argv[i]);
 				break;
 			case 1: printf("Setting Bios to \"%s\"\n", argv[i]);
 				if (file_exists(argv[i]))
@@ -344,6 +367,18 @@ int main(int argc, char *argv[])    {
 				strcpy(cdpath, argv[i]);
 				parse_status = 0;
 				break;
+			case 3: 
+				core = atoi(argv[i]);
+				if(core<0 || core>SH2CORE_JIT) core=0;
+				printf("Setting SH2 Core to \"%d\"\n", core);
+				parse_status = 0;
+				break;
+			case 4: 
+				snd = atoi(argv[i]);
+				if(snd<0 || snd>SNDCORE_AL) snd=0;
+				printf("Setting Sound Core to \"%d\"\n", snd);
+				parse_status = 0;
+				break;
     	}
     }
     // incase no bios has been set using command line
@@ -351,14 +386,16 @@ int main(int argc, char *argv[])    {
 
 
     // Init SDL
-    if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO)) {
+	int flags = SDL_INIT_TIMER|SDL_INIT_VIDEO;
+	//if(snd==SNDCORE_SDL) flags |= SDL_INIT_AUDIO;
+    if (SDL_Init(flags)) {
     	printf("Error initializing SDL...\n");
     	exit(-1);
     }
 
     printf("Starting emulation...\n");
 
-    YuiInit(core);
+    YuiInit(core, snd);
 
     printf("\n*****************\nFinished\n");
     SDL_Quit();
