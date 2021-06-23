@@ -1,0 +1,67 @@
+PRGNAME     = yabause.elf
+HOST_CC		= gcc
+CC			= /opt/gcw0-toolchain/bin/mipsel-linux-gcc
+CXX			= /opt/gcw0-toolchain/bin/mipsel-linux-g++
+
+PROFILE = 0
+M68K_CORE = NO
+
+ifeq ($(M68K_CORE), YES)
+CFLAGS 		+= -DHAVE_C68K=1
+ADD_OBJ		+= src/c68k/c68k.o src/c68k/c68kexec.o
+endif
+
+SRCDIR		= ./src ./src/gui ./src/titan 
+SRCDIR		+= ./source/scalers ./source/ports/$(PORT) ./source/sound/$(SOUND_ENGINE) ./source/sound_output/$(SOUND_OUTPUT)
+VPATH		= $(SRCDIR)
+SRC_C		= $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.c))
+SRC_CP		= $(foreach dir, $(SRCDIR), $(wildcard $(dir)/*.cpp))
+OBJ_C		= $(notdir $(patsubst %.c, %.o, $(SRC_C)))
+OBJ_CP		= $(notdir $(patsubst %.cpp, %.o, $(SRC_CP)))
+OBJS		= $(OBJ_C) $(OBJ_CP)
+
+CFLAGS		= -Ofast -flto -Wall -Wextra -mips32r2
+CFLAGS		+= -DLSB_FIRST
+CFLAGS		+= -DHAVE_FLOORF=1 -DHAVE_STRCASECMP=1 -DHAVE_BUILTIN_BSWAP16=1 -DHAVE_BUILTIN_BSWAP32=1 -DHAVE_SYS_TIME_H=1 -DHAVE_STDINT_H=1 -DUSE_16BPP=1 -DUSE_RGB_565=1 -DHAVE_LIBSDL=1 -DFORCE_BITSHIFT
+CFLAGS		+= -DVERSION=1
+CFLAGS		+= -Isrc -Isrc/gui -Isrc/titan -Isrc/c68k
+
+SRCDIR		+= ./source/text/fb
+CFLAGS		+= -Isource/text/fb
+
+ifeq ($(PROFILE), YES)
+CFLAGS 		+= -fprofile-generate=./
+else ifeq ($(PROFILE), APPLY)
+CFLAGS		+= -fprofile-use -fbranch-probabilities
+endif
+
+CXXFLAGS    = $(CFLAGS) -std=gnu++11
+
+LDFLAGS     = -nodefaultlibs -lc -lgcc -lm -lSDL -flto -s
+
+ifeq ($(M68K_CORE), YES)
+all: src/c68k/gen68k $(PRGNAME)
+
+src/c68k/c68kexec.o: src/c68k/gen68k
+
+src/c68k/gen68k: src/c68k/c68kexec.c src/c68k/c68k.c src/c68k/gen68k.c
+	$(HOST_CC) $(CFLAGS) -DC68K_GEN -o $@ $^
+	cd src/c68k && ./gen68k
+	cd ../..
+else
+all: $(PRGNAME)
+endif
+
+# Rules to make executable
+$(PRGNAME): $(OBJS) $(ADD_OBJ)
+	$(CC) $(CFLAGS) -o $(PRGNAME) $^ $(LDFLAGS)
+
+$(OBJ_C) : %.o : %.c
+	$(CC) $(CFLAGS) -std=gnu99 -c -o $@ $<
+	
+$(OBJ_CP) : %.o : %.cpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+
+clean:
+	rm -f $(PRGNAME) *.o

@@ -1,0 +1,35 @@
+#!/bin/sh
+
+mkdir -p opk
+cp ./yabause.elf opk/yabause.elf
+cp ./logo.png opk/icon.png
+cp ./COPYING opk/COPYING
+
+# https://unix.stackexchange.com/questions/219268/how-to-add-new-lines-when-using-echo
+print()
+	case    ${IFS- } in
+	(\ *)   printf  %b\\n "$*";;
+	(*)     IFS=\ $IFS
+	printf  %b\\n "$*"
+	IFS=${IFS#?}
+esac
+
+# Create GmenuNx entry file plus other things
+
+print '[Desktop Entry]
+Type=Application
+Name=Yabause (Saturn)
+Comment=Needs bios.bin in $HOME/.yabause
+Exec=yabause.elf %f
+Icon=icon
+Terminal=false
+Type=Application
+Categories=emulators;
+X-OD-NeedsDownscaling=true
+selectorbrowser=true
+SelectorFilter=mds, MDS, cue, CUE, ccd, CCD
+' > opk/default."$1".desktop
+
+mksquashfs ./opk yabause_"$1".opk -all-root -noappend -no-exports -no-xattrs
+
+rm -r opk
