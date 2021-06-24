@@ -344,55 +344,6 @@ void SH2Step(SH2_struct *context)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int SH2StepOver(SH2_struct *context, void (*func)(void *, u32, void *))
-{
-   SH2Interface_struct *core=context->core;
-   if (core)
-   {
-      u32 tmp = core->GetPC(context);
-      u16 inst= context->MappedMemoryReadWord(context, context->regs.PC);
-
-      // If instruction is jsr, bsr, or bsrf, step over it
-      if ((inst & 0xF000) == 0xB000 || // BSR 
-         (inst & 0xF0FF) == 0x0003 || // BSRF
-         (inst & 0xF0FF) == 0x400B)   // JSR
-      {
-         // Set breakpoint after at PC + 4
-         context->stepOverOut.callBack = func;
-         context->stepOverOut.type = SH2ST_STEPOVER;
-         context->stepOverOut.enabled = 1;
-         context->stepOverOut.address = context->regs.PC+4;
-         return 1;
-      }
-      else
-      {
-         // Execute 1 instruction instead
-         SH2Exec(context, context->cycles+1);
-
-         // Sometimes it doesn't always execute one instruction,
-         // let's make sure it did
-         if (tmp == SH2Core->GetPC(context))
-            SH2Exec(context, context->cycles+1);
-      }
-   }
-   return 0;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void SH2StepOut(SH2_struct *context, void (*func)(void *, u32, void *))
-{
-   if (SH2Core)
-   {
-      context->stepOverOut.callBack = func;
-      context->stepOverOut.type = SH2ST_STEPOUT;
-      context->stepOverOut.enabled = 1;
-      context->stepOverOut.address = 0;
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 int SH2TrackInfLoopInit(SH2_struct *context)
 {
    context->trackInfLoop.maxNum = 100;
@@ -457,49 +408,6 @@ void SH2WriteNotify(u32 start, u32 length) {
       SH2Core->WriteNotify(start, length);
 }
 
-
-//////////////////////////////////////////////////////////////////////////////
-
-void SH2HandleStepOverOut(SH2_struct *context)
-{
-   if (context->stepOverOut.enabled)
-   {
-      switch ((int)context->stepOverOut.type)
-      {
-      case SH2ST_STEPOVER: // Step Over
-         if (context->regs.PC == context->stepOverOut.address)
-         {
-            context->stepOverOut.enabled = 0;
-            context->stepOverOut.callBack(context, context->regs.PC, (void *)context->stepOverOut.type);
-         }
-         break;
-      case SH2ST_STEPOUT: // Step Out
-         {
-            u16 inst;
-
-            if (context->stepOverOut.levels < 0 && context->regs.PC == context->regs.PR)
-            {
-               context->stepOverOut.enabled = 0;
-               context->stepOverOut.callBack(context, context->regs.PC, (void *)context->stepOverOut.type);
-               return;
-            }
-
-            inst = context->instruction;;
-
-            if ((inst & 0xF000) == 0xB000 || // BSR 
-               (inst & 0xF0FF) == 0x0003 || // BSRF
-               (inst & 0xF0FF) == 0x400B)   // JSR
-               context->stepOverOut.levels++;
-            else if (inst == 0x000B || // RTS
-                     inst == 0x002B)   // RTE
-               context->stepOverOut.levels--;
-
-            break;
-         }
-      default: break;
-      }
-   }
-}
 
 //////////////////////////////////////////////////////////////////////////////
 

@@ -2718,8 +2718,6 @@ int SH2InterpreterInit(enum SHMODELTYPE model, SH2_struct *msh, SH2_struct *ssh)
                break;
          }
       }
-
-      SH1->stepOverOut.enabled = 0;
    }
    else if (model == SHMT_SH2)
    {
@@ -2762,9 +2760,6 @@ int SH2InterpreterInit(enum SHMODELTYPE model, SH2_struct *msh, SH2_struct *ssh)
                break;
          }
       }
-
-      MSH2->stepOverOut.enabled = 0;
-      SSH2->stepOverOut.enabled = 0;
    }
    
    return 0;
@@ -2781,9 +2776,6 @@ void SH2InterpreterDeInit()
 
 void SH2InterpreterReset(UNUSED SH2_struct *context)
 {
-   // Reset any internal variables here
-   context->stepOverOut.enabled = 0;
-   context->stepOverOut.enabled = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////

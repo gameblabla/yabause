@@ -366,17 +366,6 @@ struct SH2_struct
    u8 isIdle;
    u8 isSleeping;
    u16 instruction;
-   struct
-   {
-      u8 enabled;
-      void (*callBack)(void *, u32, void *);
-      enum SH2STEPTYPE type;
-      union
-      {
-         s32 levels;
-         u32 address;
-      };
-   } stepOverOut;
    struct 
    {
       u8 enabled;
