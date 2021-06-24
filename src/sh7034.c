@@ -22,7 +22,7 @@
 /*! \file sh7034.c
     \brief SH7034 cpu implementation (CD block controller)
 */
-
+#include <stdint.h>
 #include "core.h"
 #include "sh7034.h"
 #include "assert.h"
@@ -60,7 +60,7 @@ u8 transfer_buffer[13] = { 0 };
 
 void update_transfer_buffer()
 {
-   int i;
+   uint_fast8_t i;
    for (i = 0; i < 13; i++)
    {
       transfer_buffer[i] = T2ReadByte(sh1_cxt.ram, 0x0002D0 + i);//0xF0002D0
@@ -71,1132 +71,14 @@ u16 cr_response[4] = { 0 };
 
 void update_cr_response_values(u32 addr)
 {
-   int updated = 0;
    if (addr >= 0x0F00026C && addr <= 0x0F000273)
    {
-      updated = 1;
       //0x0F00026C
       cr_response[0] = T2ReadWord(sh1_cxt.ram, 0x00026C + 0);
       cr_response[1] = T2ReadWord(sh1_cxt.ram, 0x00026C + 2);
       cr_response[2] = T2ReadWord(sh1_cxt.ram, 0x00026C + 4);
       cr_response[3] = T2ReadWord(sh1_cxt.ram, 0x00026C + 6);
    }
-
-   if (updated)
-   {
-      int q = 1;
-   }
-}
-
-void cd_trace_log(const char * format, ...)
-{
-   static int started = 0;
-   static FILE* fp = NULL;
-   va_list l;
-
-   if (!started)
-   {
-      fp = fopen("C:/yabause/log.txt", "w");
-
-      if (!fp)
-      {
-         return;
-      }
-      started = 1;
-   }
-
-   va_start(l, format);
-   vfprintf(fp, format, l);
-   va_end(l);
-}
-
-
-void print_tocr()
-{
-   TIMERTRACE("Timer Output Control Register(TOCR)\n");
-
-   //tocr
-   if (sh1_cxt.onchip.itu.tocr & (1 << 1))
-      TIMERTRACE("\tTIOCA3, TIOCA4, and TIOCB4 are output directly \n");
-   else
-      TIMERTRACE("\tTIOCA3, TIOCA4, and TIOCB4 are inverted and output\n");
-
-   if (sh1_cxt.onchip.itu.tocr & (1 << 0))
-      TIMERTRACE("\tTIOCB3, TOCXA4, and TOCXB4 are output directly\n");
-   else
-      TIMERTRACE("\tTIOCB3, TOCXA4, and TOCXB4 are inverted and output\n");
-}
-
-void print_tcr(int which)
-{
-   TIMERTRACE("Timer Control Register(TCR)\n");
-
-   switch ((sh1_cxt.onchip.itu.channel[which].tcr >> 5) & 3)
-   {
-   case 0:
-      TIMERTRACE("\tTCNT is not cleared\n");
-      break;
-   case 1:
-      TIMERTRACE("\tTCNT is cleared by general register A (GRA) compare match or input capture\n");
-      break;
-   case 2:
-      TIMERTRACE("\tTCNT is cleared by general register B (GRB) compare match or input capture\n");
-      break;
-   case 3:
-      TIMERTRACE("\tSynchronizing clear: TCNT is cleared in synchronization with clear of other timer counters operating in sync\n");
-      break;
-   }
-
-   if (sh1_cxt.onchip.itu.channel[which].tcr & (1 << 4))
-      TIMERTRACE("\tCount both rising and falling edges\n");
-   else
-   {
-      if (sh1_cxt.onchip.itu.channel[which].tcr & (1 << 3))
-         TIMERTRACE("\tCount falling edges.\n", which);
-      else
-         TIMERTRACE("\tCount rising edges.\n", which);
-   }
-
-   switch (sh1_cxt.onchip.itu.channel[which].tcr & 7)
-   {
-   case 0:
-      TIMERTRACE("\tInternal clock phi\n");
-      break;
-   case 1:
-      TIMERTRACE("\tInternal clock phi/2\n");
-      break;
-   case 2:
-      TIMERTRACE("\tInternal clock phi/4\n");
-      break;
-   case 3:
-      TIMERTRACE("\tInternal clock phi/8\n");
-      break;
-   case 4:
-      TIMERTRACE("\tExternal clock A\n");
-      break;
-   case 5:
-      TIMERTRACE("\tExternal clock B\n");
-      break;
-   case 6:
-      TIMERTRACE("\tExternal clock C\n");
-      break;
-   case 7:
-      TIMERTRACE("\tExternal clock D\n");
-      break;
-   }
-}
-
-void print_tior(int which)
-{
-   TIMERTRACE("Timer I/O Control Register (TIOR)\n");
-
-   //tior3
-   switch ((sh1_cxt.onchip.itu.channel[which].tior >> 4) & 7)
-   {
-      //output compare
-   case 0:
-      TIMERTRACE("\tGRB Compare match with pin output disabled\n");
-      break;
-   case 1:
-      TIMERTRACE("\tGRB 0 output at GRB compare match\n");
-      break;
-   case 2:
-      TIMERTRACE("\tGRB 1 output at GRB compare match\n");
-      break;
-   case 3:
-      TIMERTRACE("\tGRB Output toggles at GRB compare match \n");
-      break;
-      //input capture
-   case 4:
-      TIMERTRACE("\tGRB captures rising edge of input\n");
-      break;
-   case 5:
-      TIMERTRACE("\tGRB captures falling edge of input\n");
-      break;
-   case 6:
-   case 7:
-      TIMERTRACE("\tGRB captures both edges of input\n");
-      break;
-   }
-
-   switch ((sh1_cxt.onchip.itu.channel[which].tior >> 4) & 7)
-   {
-      //output compare
-   case 0:
-      TIMERTRACE("\tGRA Compare match with pin output disabled\n");
-      break;
-   case 1:
-      TIMERTRACE("\tGRA 0 output at GRA compare match\n");
-      break;
-   case 2:
-      TIMERTRACE("\tGRA 1 output at GRA compare match\n");
-      break;
-   case 3:
-      TIMERTRACE("\tGRA Output toggles at GRA compare match \n");
-      break;
-      //input capture
-   case 4:
-      TIMERTRACE("\tGRA captures rising edge of input\n");
-      break;
-   case 5:
-      TIMERTRACE("\tGRA captures falling edge of input\n");
-      break;
-   case 6:
-   case 7:
-      TIMERTRACE("\tGRA captures both edges of input\n");
-      break;
-   }
-}
-
-void print_tier(int which)
-{
-   TIMERTRACE("Timer Interrupt Enable Register (TIER)\n");
-
-   //tier3
-   if (sh1_cxt.onchip.itu.channel[which].tier & (1 << 2))
-      TIMERTRACE("\tEnables interrupt requests from OVF\n");
-   else
-      TIMERTRACE("\tDisables interrupt requests by OVF\n");
-
-   if (sh1_cxt.onchip.itu.channel[which].tier & (1 << 1))
-      TIMERTRACE("\tEnables interrupt requests by IMFB (IMIB)\n");
-   else
-      TIMERTRACE("\tDisables interrupt requests by IMFB (IMIB)\n");
-
-   if (sh1_cxt.onchip.itu.channel[which].tier & (1 << 0))
-      TIMERTRACE("\tEnables interrupt requests by IMFA (IMIA)\n");
-   else
-      TIMERTRACE("\tDisables interrupt requests by IMFA (IMIA)\n");
-}
-
-void print_tsr(int which)
-{
-   TIMERTRACE("Timer Status Register(TSR)\n");
-
-   //tsr3
-   if (sh1_cxt.onchip.itu.channel[which].tsr & (1 << 2))
-      TIMERTRACE("\tSetting condition: TCNT overflow from H'FFFF to H'0000 or underflow from H'0000 to H'FFFF\n");
-   else
-      TIMERTRACE("\tClearing condition: Read OVF when OVF = 1, then write 0 in OVF\n");
-
-   if (sh1_cxt.onchip.itu.channel[which].tsr & (1 << 1))
-      TIMERTRACE("\tSetting conditions: !!!!!!!!\n");
-   else
-      TIMERTRACE("\tClearing condition: Read IMFB when IMFB = 1, then write 0 in IMFB\n");
-
-   if (sh1_cxt.onchip.itu.channel[which].tsr & (1 << 0))
-      TIMERTRACE("\tSetting conditions: !!!!!!!!\n");
-   else
-      TIMERTRACE("\tClearing condition: Read IMFA when IMFA = 1, then write 0 in IMFA. DMAC is activated by an IMIA interrupt (only channels 0E)\n");
-}
-
-void print_tmdr(int which)
-{
-   TIMERTRACE("TMDR\n");
-
-   if (which == 2)
-   {
-      if (sh1_cxt.onchip.itu.tmdr & (1 << 6))
-         TIMERTRACE("\tChannel 2 operates in phase counting mode\n");
-      else
-         TIMERTRACE("\tChannel 2 operates normally .\n");
-      
-      if (sh1_cxt.onchip.itu.tmdr & (1 << 5))
-         TIMERTRACE("\tOVF of TSR2 is set to 1 when TCNT2 overflows\n");
-      else
-         TIMERTRACE("\tOVF of TSR2 is set to 1 when TCNT2 overflows or underflows.\n");
-
-   }
-
-   if (sh1_cxt.onchip.itu.tmdr & (1 << which))
-      TIMERTRACE("\toperates in PWM mode\n");
-   else
-      TIMERTRACE("\toperates normally.\n");
-}
-
-void print_tsnc(int which)
-{
-   //tsnc
-   TIMERTRACE("Timer Synchro Register (TSNC)\n");
-
-   if (sh1_cxt.onchip.itu.tstr & (1 << which))
-      TIMERTRACE("\toperates synchronously\n");
-   else
-      TIMERTRACE("\toperates independently\n");
-
-}
-
-void print_tstr(int which)
-{
-   //tstr
-   TIMERTRACE("Timer Start Register(TSTR)\n");
-
-   if (sh1_cxt.onchip.itu.tstr & (1 << which))
-      TIMERTRACE("\tTimer is counting\n");
-   else
-      TIMERTRACE("\tTimer is halted\n");
-}
-
-void print_tfcr(int which)
-{
-   TIMERTRACE("Timer Function Control Register (TFCR) \n");
-
-   if (which == 3 || which == 4)
-   {
-      //tfcr
-      switch ((sh1_cxt.onchip.itu.tfcr >> 4) & 3)
-      {
-      case 0:
-      case 1:
-         TIMERTRACE("\tChannels 3 and 4 operate normally\n");
-         break;
-      case 2:
-         TIMERTRACE("\tChannels 3 and 4 operate together in complementary PWM mode\n");
-         break;
-      case 3:
-         TIMERTRACE("\tChannels 3 and 4 operate together in reset-synchronized PWM mode\n");
-         break;
-      }
-   }
-
-   if (which == 4)
-   {
-      if (sh1_cxt.onchip.itu.tfcr & (1 << 3))
-         TIMERTRACE("\tBuffer operation of GRB4 and BRB4\n");
-      else
-         TIMERTRACE("\tGRB4 operates normally\n");
-
-      if (sh1_cxt.onchip.itu.tfcr & (1 << 2))
-         TIMERTRACE("\tBuffer operation of GRA4 and BRA4\n");
-      else
-         TIMERTRACE("\tGRA4 operates normally\n");
-   }
-
-   if (which == 3)
-   {
-      if (sh1_cxt.onchip.itu.tfcr & (1 << 1))
-         TIMERTRACE("\tBuffer operation of GRB3 and BRB3\n");
-      else
-         TIMERTRACE("\tGRB4 operates normally\n");
-
-      if (sh1_cxt.onchip.itu.tfcr & (1 << 0))
-         TIMERTRACE("\tBuffer operation of GRA3 and BRA3\n");
-      else
-         TIMERTRACE("\tGRA4 operates normally\n");
-   }
-}
-
-void print_timers()
-{
-
-   //do timer 3
-
-
-   //tcr3
-
-   int which = 3;
-
-   TIMERTRACE("***TIMER %d***\n", which);
-
-   print_tstr(which);
-
-   print_tsnc(which);
-
-   print_tmdr(which);
-
-   print_tfcr(which);
-
-   print_tcr(which);
-
-   print_tior(which);
-
-   print_tier(which);
-
-   print_tsr(which);
-   
-   //tcnt3
-   TIMERTRACE("\tTCNT: %04X\n", sh1_cxt.onchip.itu.channel[which].tcnt);
-   //gra3
-   TIMERTRACE("\tGRA: %04X\n", sh1_cxt.onchip.itu.channel[which].gra);
-   //grb3
-   TIMERTRACE("\tGRB: %04X\n", sh1_cxt.onchip.itu.channel[which].grb);
-   //bra3
-   TIMERTRACE("\tBRA: %04X\n", sh1_cxt.onchip.itu.channel[which].bra);
-   //brb3
-   TIMERTRACE("\tBRB: %04X\n", sh1_cxt.onchip.itu.channel[which].brb);
-
-   print_tocr();
-
-
-#if 0
-   TIMERTRACE("TSTR\n");
-
-   int i;
-   for (i = 4; i >= 0; i--)
-   {
-
-   }
-
-   TIMERTRACE("TSTR\n");
-
-   for (i = 4; i >= 0; i--)
-   {
-      if (sh1_cxt.onchip.itu.tsnc & (1 << i))
-         TIMERTRACE("\tThe timer counter for TCNT%d operates independently\n", i);
-      else
-         TIMERTRACE("\tTCNT%d operates synchronously.\n", i);
-   }
-
-   for (i = 4; i >= 0; i--)
-   {
-      TIMERTRACE("TIER%d\n", i);
-
-
-   }
-#endif
-
-#if 0
-   TIMERTRACE("SCR\n");
-
-   for (i = 0; i < 2; i++)
-   {
-      if (sh1_cxt.onchip.sci[i].scr & SCI_TIE)
-         TIMERTRACE("\tSCI Channel %d Transmit-data-empty interrupt request (TXI) is enabled\n", i);
-      else
-         TIMERTRACE("\tSCI Channel %d Transmit-data-empty interrupt request (TXI) is disabled\n", i);
-
-      if (sh1_cxt.onchip.sci[i].scr & SCI_RIE)
-         TIMERTRACE("\tSCI Channel %d Receive-data-full interrupt (RXI) and receive-error interrupt (ERI) requests are enabled\n", i);
-      else
-         TIMERTRACE("\tSCI Channel %d Receive-data-full interrupt (RXI) and receive-error interrupt (ERI) requests are disabled \n", i);
-
-      if (sh1_cxt.onchip.sci[i].scr & SCI_MPIE)
-         TIMERTRACE("\tSCI Channel %d Multiprocessor interrupts are enabled\n", i);
-      else
-         TIMERTRACE("\tSCI Channel %d Multiprocessor interrupts are disabled\n", i);
-
-      if (sh1_cxt.onchip.sci[i].scr & SCI_TEIE)
-         TIMERTRACE("\tSCI Channel %d Transmit-end interrupt (TEI) requests are enabled\n", i);
-      else
-         TIMERTRACE("\tSCI Channel %d Transmit-end interrupt (TEI) requests are disabled\n", i);
-   }
-#endif
-   //TIMERTRACE("TCSR\n");
-
-   //if (sh1_cxt.onchip.wdt.tcsr & (1 << 6))
-   //   TIMERTRACE("\tSCI Channel %d Transmit-data-empty interrupt request (TXI) is enabled\n", i);
-   //else
-   //   TIMERTRACE("\tSCI Channel %d Transmit-data-empty interrupt request (TXI) is disabled\n", i);
-#if 0
-   for (i = 4; i >= 0; i--)
-   {
-      TIMERTRACE("TIOR%d\n", i);
-
-
-   }
-#endif
-}
-
-void print_pacr1()
-{
-   PORTTRACE("PACR1\n");
-
-   PORTTRACE(" Pin 15\n");
-
-   switch ((sh1_cxt.onchip.pfc.pacr1 >> 14) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PA15)\n");
-      break;
-   case 1:
-      PORTTRACE("\tInterrupt request input (IRQ3)\n");
-      break;
-   case 2:
-      PORTTRACE("\tReserved\n");
-      break;
-   case 3:
-      PORTTRACE("\tDMA transfer request input (DREQ1)\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 14\n");
-
-   switch ((sh1_cxt.onchip.pfc.pacr1 >> 12) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PA14)\n");
-      break;
-   case 1:
-      PORTTRACE("\tInterrupt request input (IRQ2)\n");
-      break;
-   case 2:
-      PORTTRACE("\tReserved\n");
-      break;
-   case 3:
-      PORTTRACE("\tDMA transfer acknowledge output (DACK1)\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 13\n");
-
-   switch ((sh1_cxt.onchip.pfc.pacr1 >> 10) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PA13)\n");
-      break;
-   case 1:
-      PORTTRACE("\tInterrupt request input (IRQ1)\n");
-      break;
-   case 2:
-      PORTTRACE("\tITU timer clock input (TCLKB)\n");
-      break;
-   case 3:
-      PORTTRACE("\tDMA transfer request input (DREQ0)\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 12\n");
-
-   switch ((sh1_cxt.onchip.pfc.pacr1 >> 8) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PA12)\n");
-      break;
-   case 1:
-      PORTTRACE("\tInterrupt request input (IRQ0)\n");
-      break;
-   case 2:
-      PORTTRACE("\tITU timer clock input (TCLKA)\n");
-      break;
-   case 3:
-      PORTTRACE("\tDMA transfer acknowledge output (DACK0)\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 11\n");
-
-   switch ((sh1_cxt.onchip.pfc.pacr1 >> 6) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PA11)\n");
-      break;
-   case 1:
-      PORTTRACE("\tUpper data bus parity input/output (DPH)\n");
-      break;
-   case 2:
-      PORTTRACE("\tITU input capture/output compare (TIOCB1)\n");
-      break;
-   case 3:
-      PORTTRACE("\tReserved\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 10\n");
-
-   switch ((sh1_cxt.onchip.pfc.pacr1 >> 4) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PA10)\n");
-      break;
-   case 1:
-      PORTTRACE("\tLower data bus parity input/output (DPL)\n");
-      break;
-   case 2:
-      PORTTRACE("\tITU input capture/output compare (TIOCA1)\n");
-      break;
-   case 3:
-      PORTTRACE("\tReserved\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 9\n");
-
-   switch ((sh1_cxt.onchip.pfc.pacr1 >> 2) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PA9)\n");
-      break;
-   case 1:
-      PORTTRACE("\tAddress hold output (AH)\n");
-      break;
-   case 2:
-      PORTTRACE("\tA/D conversion trigger input (ADTRG)\n");
-      break;
-   case 3:
-      PORTTRACE("\tInterrupt request output (IRQOUT)\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 8\n");
-
-   switch ((sh1_cxt.onchip.pfc.pacr1) & 1)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PA8)\n");
-      break;
-   case 1:
-      PORTTRACE("\tBus request input (BREQ)\n");
-      break;
-   }
-}
-
-void print_pacr2()
-{
-   PORTTRACE("PACR2\n");
-
-   PORTTRACE(" Pin 7\n");
-
-   if(!((sh1_cxt.onchip.pfc.pacr2) & (1 << 14)))
-      PORTTRACE("\tInput / output(PA7)\n");
-   else
-      PORTTRACE("\tBus request acknowledge output (BACK)\n");
-
-   PORTTRACE(" Pin 6\n");
-
-   if (!((sh1_cxt.onchip.pfc.pacr2) & (1 << 12)))
-      PORTTRACE("\tInput / output(PA6)\n");
-   else
-      PORTTRACE("\tRead output (RD) \n");
-
-   PORTTRACE(" Pin 5\n");
-
-   if (!((sh1_cxt.onchip.pfc.pacr2) & (1 << 10)))
-      PORTTRACE("\tInput / output(PA5)\n");
-   else
-      PORTTRACE("\tUpper write output (WRH) or lower byte strobe output (LBS) \n");
-
-   PORTTRACE(" Pin 4\n");
-
-   if (!((sh1_cxt.onchip.pfc.pacr2) & (1 << 8)))
-      PORTTRACE("\tInput / output(PA4)\n");
-   else
-      PORTTRACE("\tLower write output (WRL) or write output (WR) \n");
-
-   PORTTRACE(" Pin 3\n");
-
-   switch ((sh1_cxt.onchip.pfc.pacr2 >> 6) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PA3)\n");
-      break;
-   case 1:
-      PORTTRACE("\tChip select output (CS7)\n");
-      break;
-   case 2:
-      PORTTRACE("\tWait state input (WAIT) \n");
-      break;
-   case 3:
-      PORTTRACE("\tReserved\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 2\n");
-
-   switch ((sh1_cxt.onchip.pfc.pacr2 >> 4) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PA2)\n");
-      break;
-   case 1:
-      PORTTRACE("\tChip select output (CS6)\n");
-      break;
-   case 2:
-      PORTTRACE("\tITU input capture/output compare (TIOCB0)\n");
-      break;
-   case 3:
-      PORTTRACE("\tReserved\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 1\n");
-
-   switch ((sh1_cxt.onchip.pfc.pacr2 >> 2) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PA1)\n");
-      break;
-   case 1:
-      PORTTRACE("\tChip select output (CS5)\n");
-      break;
-   case 2:
-      PORTTRACE("\tRow address strobe output (RAS)\n");
-      break;
-   case 3:
-      PORTTRACE("\tReserved\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 0\n");
-
-   switch (sh1_cxt.onchip.pfc.pacr2  & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PA0)\n");
-      break;
-   case 1:
-      PORTTRACE("\tChip select output (CS4)\n");
-      break;
-   case 2:
-      PORTTRACE("\tITU input capture/output compare (TIOCA0)\n");
-      break;
-   case 3:
-      PORTTRACE("\tReserved\n");
-      break;
-   }
-}
-
-void print_pbcr1()
-{
-   PORTTRACE("PBCR1\n");
-
-   PORTTRACE(" Pin 15\n");
-
-   switch ((sh1_cxt.onchip.pfc.pbcr1 >> 14) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PB15)\n");
-      break;
-   case 1:
-      PORTTRACE("\tInterrupt request input (IRQ7)\n");
-      break;
-   case 2:
-      PORTTRACE("\tReserved\n");
-      break;
-   case 3:
-      PORTTRACE("\tTiming pattern output (TP15)\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 14\n");
-
-   switch ((sh1_cxt.onchip.pfc.pbcr1 >> 12) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PB14)\n");
-      break;
-   case 1:
-      PORTTRACE("\tInterrupt request input (IRQ6)\n");
-      break;
-   case 2:
-      PORTTRACE("\tReserved\n");
-      break;
-   case 3:
-      PORTTRACE("\tTiming pattern output (TP14)\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 13\n");
-
-   switch ((sh1_cxt.onchip.pfc.pbcr1 >> 10) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PB13)\n");
-      break;
-   case 1:
-      PORTTRACE("\tInterrupt request input (IRQ5)\n");
-      break;
-   case 2:
-      PORTTRACE("\tSerial clock input/output (SCK1)\n");
-      break;
-   case 3:
-      PORTTRACE("\tTiming pattern output (TP13)\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 12\n");
-
-   switch ((sh1_cxt.onchip.pfc.pbcr1 >> 8) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PB12)\n");
-      break;
-   case 1:
-      PORTTRACE("\tInterrupt request input (IRQ4)\n");
-      break;
-   case 2:
-      PORTTRACE("\tSerial clock input/output (SCK0)\n");
-      break;
-   case 3:
-      PORTTRACE("\tTiming pattern output (TP12)\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 11\n");
-
-   switch ((sh1_cxt.onchip.pfc.pbcr1 >> 6) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PB11)\n");
-      break;
-   case 1:
-      PORTTRACE("\tReserved\n");
-      break;
-   case 2:
-      PORTTRACE("\tTransmit data output (TxD1)\n");
-      break;
-   case 3:
-      PORTTRACE("\tTiming pattern output (TP11)\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 10\n");
-
-   switch ((sh1_cxt.onchip.pfc.pbcr1 >> 4) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PB10)\n");
-      break;
-   case 1:
-      PORTTRACE("\tReserved\n");
-      break;
-   case 2:
-      PORTTRACE("\tReceive data input (RxD1)\n");
-      break;
-   case 3:
-      PORTTRACE("\tTiming pattern output (TP10)\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 9\n");
-
-   switch ((sh1_cxt.onchip.pfc.pbcr1 >> 2) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PB9)\n");
-      break;
-   case 1:
-      PORTTRACE("\tReserved\n");
-      break;
-   case 2:
-      PORTTRACE("\tTransmit data output (TxD0)\n");
-      break;
-   case 3:
-      PORTTRACE("\tTiming pattern output (TP9)\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 8\n");
-
-   switch ((sh1_cxt.onchip.pfc.pbcr1 >> 0) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PB8)\n");
-      break;
-   case 1:
-      PORTTRACE("\tReserved\n");
-      break;
-   case 2:
-      PORTTRACE("\tReceive data input (RxD0)\n");
-      break;
-   case 3:
-      PORTTRACE("\tTiming pattern output (TP8)\n");
-      break;
-   }
-}
-
-void print_pbcr2()
-{
-   PORTTRACE("PBCR2\n");
-
-   PORTTRACE(" Pin 7\n");
-
-   switch ((sh1_cxt.onchip.pfc.pbcr2 >> 14) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PB7)\n");
-      break;
-   case 1:
-      PORTTRACE("\tITU timer clock input (TCLKD)\n");
-      break;
-   case 2:
-      PORTTRACE("\tITU output compare (TOCXB4)\n");
-      break;
-   case 3:
-      PORTTRACE("\tTiming pattern output (TP7)\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 6\n");
-
-   switch ((sh1_cxt.onchip.pfc.pbcr2 >> 12) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PB6)\n");
-      break;
-   case 1:
-      PORTTRACE("\tITU timer clock input (TCLKC)\n");
-      break;
-   case 2:
-      PORTTRACE("\tITU output compare (TOCXA4)\n");
-      break;
-   case 3:
-      PORTTRACE("\tTiming pattern output (TP6)\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 5\n");
-
-   switch ((sh1_cxt.onchip.pfc.pbcr2 >> 10) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PB5)\n");
-      break;
-   case 1:
-      PORTTRACE("\tReserved\n");
-      break;
-   case 2:
-      PORTTRACE("\tITU input capture/output compare (TIOCB4)\n");
-      break;
-   case 3:
-      PORTTRACE("\tTiming pattern output (TP5)\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 4\n");
-
-   switch ((sh1_cxt.onchip.pfc.pbcr2 >> 8) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PB4)\n");
-      break;
-   case 1:
-      PORTTRACE("\tReserved\n");
-      break;
-   case 2:
-      PORTTRACE("\tITU input capture/output compare (TIOCA4)\n");
-      break;
-   case 3:
-      PORTTRACE("\tTiming pattern output (TP4)\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 3\n");
-
-   switch ((sh1_cxt.onchip.pfc.pbcr2 >> 6) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PB3)\n");
-      break;
-   case 1:
-      PORTTRACE("\tReserved\n");
-      break;
-   case 2:
-      PORTTRACE("\tITU input capture/output compare (TIOCB3)\n");
-      break;
-   case 3:
-      PORTTRACE("\tTiming pattern output (TP3)\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 2\n");
-
-   switch ((sh1_cxt.onchip.pfc.pbcr2 >> 4) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PB2)\n");
-      break;
-   case 1:
-      PORTTRACE("\tReserved\n");
-      break;
-   case 2:
-      PORTTRACE("\tITU input capture/output compare (TIOCA3)\n");
-      break;
-   case 3:
-      PORTTRACE("\tTiming pattern output (TP2)\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 1\n");
-
-   switch ((sh1_cxt.onchip.pfc.pbcr2 >> 2) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PB1)\n");
-      break;
-   case 1:
-      PORTTRACE("\tReserved\n");
-      break;
-   case 2:
-      PORTTRACE("\tITU input capture/output compare (TIOCB2)\n");
-      break;
-   case 3:
-      PORTTRACE("\tTiming pattern output (TP1)\n");
-      break;
-   }
-
-   PORTTRACE(" Pin 0\n");
-
-   switch ((sh1_cxt.onchip.pfc.pbcr2 >> 0) & 3)
-   {
-   case 0:
-      PORTTRACE("\tInput / output(PB0)\n");
-      break;
-   case 1:
-      PORTTRACE("\tReserved\n");
-      break;
-   case 2:
-      PORTTRACE("\tITU input capture/output compare (TIOCA2)\n");
-      break;
-   case 3:
-      PORTTRACE("\tTiming pattern output (TP0)\n");
-      break;
-   }
-}
-
-
-void port_debug()
-{
-   int i;
-   PORTTRACE("PAIOR\n");
-
-   for (i = 0; i < 16; i++)
-   {
-      if (sh1_cxt.onchip.pfc.paior & (1 << i))
-         PORTTRACE("\tPin %d is an output\n", i);
-      else
-         PORTTRACE("\tPin %d is an input\n", i);
-   }
-
-   PORTTRACE("PBIOR\n");
-
-   for (i = 0; i < 16; i++)
-   {
-      if (sh1_cxt.onchip.pfc.pbior & (1 << i))
-         PORTTRACE("\tPin %d is an output\n", i);
-      else
-         PORTTRACE("\tPin %d is an input\n", i);
-   }
-
-   print_pacr1();
-
-   print_pacr2();
-
-   print_pbcr1();
-
-   print_pbcr2();
-}
-
-void print_serial(int which)
-{
-   PORTTRACE("SCI channel %d\n", which);
-
-   if (!(sh1_cxt.onchip.sci[which].smr & (1 << 7)))
-      PORTTRACE("\tAsynchronous mode\n");
-   else
-      PORTTRACE("\tSynchronous mode\n");
-
-   if (!(sh1_cxt.onchip.sci[which].smr & (1 << 6)))
-      PORTTRACE("\tEight-bit data\n");
-   else
-      PORTTRACE("\tSeven-bit data.\n");
-
-   if (!(sh1_cxt.onchip.sci[which].smr & (1 << 5)))
-      PORTTRACE("\tParity bit not added or checked \n");
-   else
-      PORTTRACE("\tParity bit added and checked.\n");
-
-   if (!(sh1_cxt.onchip.sci[which].smr & (1 << 4)))
-      PORTTRACE("\tEven parity \n");
-   else
-      PORTTRACE("\tOdd parity\n");
-
-   if (!(sh1_cxt.onchip.sci[which].smr & (1 << 3)))
-      PORTTRACE("\tOne stop bit\n");
-   else
-      PORTTRACE("\tTwo stop bits\n");
-
-   if (!(sh1_cxt.onchip.sci[which].smr & (1 << 2)))
-      PORTTRACE("\tMultiprocessor function disabled \n");
-   else
-      PORTTRACE("\tMultiprocessor format selected\n");
-
-   switch (sh1_cxt.onchip.sci[which].smr & 3)
-   {
-   case 0:
-      PORTTRACE("\tSystem clock\n");
-      break;
-   case 1:
-      PORTTRACE("\tphi/4\n");
-      break;
-   case 2:
-      PORTTRACE("\tphi/16\n");
-      break;
-   case 3:
-      PORTTRACE("\tphi/64\n");
-      break;
-   }
-
-   PORTTRACE("SCR");
-
-   if (!(sh1_cxt.onchip.sci[which].scr & SCI_TIE))
-      PORTTRACE("\tTransmit-data-empty interrupt request (TXI) is disabled \n");
-   else
-      PORTTRACE("\tTransmit-data-empty interrupt request (TXI) is enabled\n");
-
-   if (!(sh1_cxt.onchip.sci[which].scr & SCI_RIE))
-      PORTTRACE("\tReceive-data-full interrupt (RXI) and receive-error interrupt (ERI) requests are disabled  \n");
-   else
-      PORTTRACE("\tReceive-data-full interrupt (RXI) and receive-error interrupt (ERI) requests are enabled\n");
-
-   if (!(sh1_cxt.onchip.sci[which].scr & SCI_TE))
-      PORTTRACE("\tTransmitter disabled \n");
-   else
-      PORTTRACE("\tTransmitter enabled.\n");
-
-   if (!(sh1_cxt.onchip.sci[which].scr & SCI_RE))
-      PORTTRACE("\tReceiver disabled  \n");
-   else
-      PORTTRACE("\tReceiver enabled.\n");
-
-   if (!(sh1_cxt.onchip.sci[which].scr & SCI_MPIE))
-      PORTTRACE("\tMultiprocessor interrupts are disabled  \n");
-   else
-      PORTTRACE("\tMultiprocessor interrupts are enabled\n");
-
-   if (!(sh1_cxt.onchip.sci[which].scr & SCI_TEIE))
-      PORTTRACE("\tTransmit-end interrupt (TEI) requests are disabled \n");
-   else
-      PORTTRACE("\tTransmit-end interrupt (TEI) requests are enabled.\n");
-
-   if (sh1_cxt.onchip.sci[which].smr & (1 << 7))
-   {
-      //synchronous mode
-      switch (sh1_cxt.onchip.sci[which].scr & 3)
-      {
-      case 0:
-      case 1:
-         PORTTRACE("\tInternal clock, SCK pin used for serial clock output\n");
-         break;
-      case 2:
-      case 3:
-         PORTTRACE("\tExternal clock, SCK pin used for serial clock input\n");
-         break;
-      }
-   }
-   else
-   {
-      //async
-      switch (sh1_cxt.onchip.sci[which].scr & 3)
-      {
-      case 0:
-         PORTTRACE("\tInternal clock, SCK pin used for input pin\n");
-         break;
-      case 1:
-         PORTTRACE("\tInternal clock, SCK pin used for clock output\n");
-         break;
-      case 2:
-      case 3:
-         PORTTRACE("\tExternal clock, SCK pin used for clock input\n");
-         break;
-      }
-   }
-
-   PORTTRACE("\tBitrate %02X\n", sh1_cxt.onchip.sci[which].brr);
-
-   //serial pin
-
-   PORTTRACE("\tSCK0 %d\n", ((sh1_cxt.onchip.pfc.pbcr1 >> 8) & 3));
-   PORTTRACE("\tIn/out %d (1 means output)\n", ((sh1_cxt.onchip.pfc.pbior >> 12) & 1));
 }
 
 struct Sh1 sh1_cxt;
@@ -1375,14 +257,6 @@ void onchip_write_timer_word(struct Onchip * regs, u32 addr, int which_timer, u1
 
 void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
 {
-   CDTRACE("wbreg: %08X %02X\n", addr, data);
-
-   print_serial(0);
-
-   if (addr == 0x5FFFF25)
-   {
-      int q = 1;
-   }
    if (addr >= 0x5FFFE00 && addr <= 0x5FFFEBF)
    {
       //unmapped
@@ -2475,7 +1349,6 @@ void onchip_dmac_write_word(struct Onchip * regs, u32 addr, int which, u16 data)
 
 void onchip_write_word(struct Onchip * regs, u32 addr, u16 data)
 {
-   print_serial(0);
    CDTRACE("wwreg: %08X %04X\n", addr, data);
    if (addr >= 0x5FFFE00 && addr <= 0x5FFFEBF)
    {
@@ -3339,7 +2212,7 @@ void onchip_dmac_write_long(struct Onchip * regs, u32 addr, int which, u32 data)
 }
 void onchip_write_long(struct Onchip * regs, u32 addr, u32 data)
 {
-   print_serial(0);
+   //print_serial(0);
 
    CDTRACE("wlreg: %08X %08X\n", addr, data);
    if (addr >= 0x5FFFE00 && addr <= 0x5FFFEBF)
@@ -4175,8 +3048,7 @@ void memory_map_write_byte(struct Sh1* sh1, u32 addr, u8 data)
 {
    u8 area = (addr >> 24) & 7;
    u8 a27 = (addr >> 27) & 1;
-   int mode_pins = 0;
-
+   
    SH1MEMLOG("memory_map_write_byte 0x%08x 0x%04x", addr, data);
 
    switch (area)
@@ -4184,11 +3056,11 @@ void memory_map_write_byte(struct Sh1* sh1, u32 addr, u8 data)
    case 0:
       //ignore a27 in area 0
 
-      if (mode_pins == 2)//010
+      /*if (mode_pins == 2)//010
       {
          //   return sh1->rom[addr & 0xffff];
       }
-      else
+      else*/
       {
          //mode 000 or 001
 
@@ -4275,14 +3147,8 @@ u8 memory_map_read_byte(struct Sh1* sh1, u32 addr)
 {
    u8 area = (addr >> 24) & 7;
    u8 a27 = (addr >> 27) & 1;
-   int mode_pins = 0;
 
    SH1MEMLOG("memory_map_read_byte 0x%08x", addr);
-
-   if (addr == 0xF0002D0)
-   {
-      int i = 1;
-   }
 
    switch (area)
    {
@@ -4375,12 +3241,7 @@ u16 memory_map_read_word(struct Sh1* sh1, u32 addr)
 {
    u8 area = (addr >> 24) & 7;
    u8 a27 = (addr >> 27) & 1;
-   int mode_pins = 0;
 
-   if (addr == 0xF00026C)
-   {
-      int q = 1;
-   }
    SH1MEMLOG("memory_map_read_word 0x%08x", addr);
 
    switch (area)
@@ -4475,20 +3336,6 @@ void memory_map_write_word(struct Sh1* sh1, u32 addr, u16 data)
 {
    u8 area = (addr >> 24) & 7;
    u8 a27 = (addr >> 27) & 1;
-   int mode_pins = 0;
-
-   
-
-   if (addr == 0x0F00026C)
-   {
-      int q = 1;
-   }
-
-   if (data == 0x20ff)
-   {
-      int q = 1;
-
-   }
 
    SH1MEMLOG("memory_map_write_word 0x%08x 0x%04x", addr, data);
 
@@ -4497,11 +3344,11 @@ void memory_map_write_word(struct Sh1* sh1, u32 addr, u16 data)
    case 0:
       //ignore a27 in area 0
 
-      if (mode_pins == 2)//010
+      /*if (mode_pins == 2)//010
       {
          //sh1->rom[addr & 0xffff];
       }
-      else
+      else*/
       {
          //mode 000 or 001
 
@@ -4594,7 +3441,6 @@ u32 memory_map_read_long(struct Sh1* sh1, u32 addr)
 {
    u8 area = (addr >> 24) & 7;
    u8 a27 = (addr >> 27) & 1;
-   int mode_pins = 0;
 
    SH1MEMLOG("memory_map_read_long 0x%08x", addr);
 
@@ -4687,12 +3533,6 @@ void memory_map_write_long(struct Sh1* sh1, u32 addr, u32 data)
 {
    u8 area = (addr >> 24) & 7;
    u8 a27 = (addr >> 27) & 1;
-   int mode_pins = 0;
-
-   if (addr == 0x0F00026C && data != 0)
-   {
-      int q = 1;
-   }
 
    SH1MEMLOG("memory_map_write_long 0x%08x 0x%04x", addr, data);
 
@@ -4701,11 +3541,11 @@ void memory_map_write_long(struct Sh1* sh1, u32 addr, u32 data)
    case 0:
       //ignore a27 in area 0
 
-      if (mode_pins == 2)//010
+      /*if (mode_pins == 2)//010
       {
          //sh1->rom[addr & 0xffff];
       }
-      else
+      else*/
       {
          //mode 000 or 001
 
@@ -5387,23 +4227,23 @@ void sh1_onchip_run_cycles(s32 cycles)
 
 void test_byte_access(struct Sh1* sh1, u32 addr)
 {
-   u8 test_val = 0xff, result;
+   u8 test_val = 0xff/*, result*/;
    memory_map_write_byte(sh1, addr, test_val);
-   result = memory_map_read_byte(sh1, addr);
+   //result = memory_map_read_byte(sh1, addr);
 }
 
 void test_word_access(struct Sh1* sh1, u32 addr)
 {
-   u16 test_val = 0xffff, result;
+   u16 test_val = 0xffff/*, result*/;
    memory_map_write_word(sh1, addr, test_val);
-   result = memory_map_read_word(sh1, addr);
+   //result = memory_map_read_word(sh1, addr);
 }
 
 void test_long_access(struct Sh1* sh1, u32 addr)
 {
-   u32 test_val = 0xffffffff, result;
+   u32 test_val = 0xffffffff/*, result*/;
    memory_map_write_long(sh1, addr, test_val);
-   result = memory_map_read_long(sh1, addr);
+   //result = memory_map_read_long(sh1, addr);
 }
 
 void test_mem_map(struct Sh1* sh1)

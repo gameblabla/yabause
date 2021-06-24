@@ -35,7 +35,7 @@
 static INLINE u8 num2bcd(u8 num);
 static INLINE void fad2msf_bcd(s32 fad, u8 *msf);
 
-#define WANT_RX_TRACE
+//#define WANT_RX_TRACE
 #ifdef WANT_RX_TRACE
 #define RXTRACE(...) cd_trace_log(__VA_ARGS__)
 #else
@@ -643,84 +643,6 @@ int do_command()
    return TIME_PERIODIC;
 }
 
-
-char* get_status_string(int status)
-{
-   u32 track_fad = msf_bcd2fad(cdd_cxt.state_data[4], cdd_cxt.state_data[5], cdd_cxt.state_data[6]);
-   u32 abs_fad = msf_bcd2fad(cdd_cxt.state_data[8], cdd_cxt.state_data[9], cdd_cxt.state_data[10]);
-
-   static char str[256] = { 0 };
-
-   switch (status)
-   {
-   case 0x46:
-      sprintf(str, "%s %d %d", "Idle", track_fad, abs_fad);
-      return str;
-   case 0x12:
-      return "Stopped";
-   case 0x22:
-      sprintf(str, "%s %d %d", "Seeking", track_fad, abs_fad);
-      return str;
-   case 0x36:
-      sprintf(str, "%s %d %d", "Reading Data Sectors", track_fad, abs_fad);
-      return str;
-   case 0x34:
-      sprintf(str, "%s %d %d", "Reading Audio Data", track_fad, abs_fad);
-      return str;
-   default:
-      return "";
-   }
-   return "";
-}
-
-char * get_command_string(int command)
-{
-   u32 fad = get_fad_from_command(cdd_cxt.received_data);
-
-   static char str[256] = { 0 };
-
-   switch (command)
-   {
-   case 0x0:
-      return "";
-   case 0x2:
-      return "Seeking Ring";
-   case 0x3:
-      return "Read TOC";
-   case 0x4:
-      return "Stop Disc";
-   case 0x6:
-      sprintf(str, "%s %d", "Read", fad);
-      return str;
-   case 0x8:
-      return "Pause";
-   case 0x9:
-      sprintf(str, "%s %d", "Seek", fad);
-      return str;
-   default:
-      return "";
-      break;
-   }
-   return "";
-}
-
-void do_cd_logging()
-{
-   char str[1024] = { 0 };
-   int i;
-
-   for (i = 0; i < 12; i++)
-      sprintf(str + strlen(str), "%02X ", cdd_cxt.received_data[i]);
-
-   sprintf(str + strlen(str), " || ");
-
-   for (i = 0; i < 12; i++)
-      sprintf(str + strlen(str), "%02X ", cdd_cxt.state_data[i]);
-
-   sprintf(str + strlen(str), " %s ||  %s", get_command_string(cdd_cxt.received_data[0]), get_status_string(cdd_cxt.state_data[0]));
-
-   CDLOG("%s\n", str);
-}
 
 int cd_command_exec()
 {
