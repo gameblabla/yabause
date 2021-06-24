@@ -291,51 +291,6 @@ typedef struct
    u8 level;
 } interrupt_struct;
 
-typedef struct
-{
-  u32 addr;
-} codebreakpoint_struct;
-
-typedef struct
-{
-  u32 addr;
-  u32 flags;
-  readbytefunc oldreadbyte;
-  readwordfunc oldreadword;
-  readlongfunc oldreadlong;
-  writebytefunc oldwritebyte;
-  writewordfunc oldwriteword;
-  writelongfunc oldwritelong;
-} memorybreakpoint_struct;
-
-#define MAX_BREAKPOINTS 10
-
-typedef struct
-{
-   codebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
-   int numcodebreakpoints;
-   memorybreakpoint_struct memorybreakpoint[MAX_BREAKPOINTS];
-   int nummemorybreakpoints;
-   void (*BreakpointCallBack)(void *, u32, void *);
-   void *BreakpointUserData;
-   int inbreakpoint;
-   int breaknow;
-} breakpoint_struct;
-
-typedef struct
-{
-   u32 addr[256];
-   int numbacktrace;
-} backtrace_struct;
-
-
-#define BREAK_BYTEREAD  0x1
-#define BREAK_WORDREAD  0x2
-#define BREAK_LONGREAD  0x4
-#define BREAK_BYTEWRITE 0x8
-#define BREAK_WORDWRITE 0x10
-#define BREAK_LONGWRITE 0x20
-
 enum SH2STEPTYPE
 {
    SH2ST_STEPOVER,
@@ -411,10 +366,6 @@ struct SH2_struct
    u8 isIdle;
    u8 isSleeping;
    u16 instruction;
-   u8 breakpointEnabled;
-   breakpoint_struct bp;
-   u8 backtraceEnabled;
-   backtrace_struct bt;
    struct
    {
       u8 enabled;
@@ -503,39 +454,6 @@ void SH2GetRegisters(SH2_struct *context, sh2regs_struct * r);
 void SH2SetRegisters(SH2_struct *context, sh2regs_struct * r);
 void SH2WriteNotify(u32 start, u32 length);
 
-void SH2SetBreakpointCallBack(SH2_struct *context, void (*func)(void *, u32, void *), void *userdata);
-int SH2AddCodeBreakpoint(SH2_struct *context, u32 addr);
-int SH2DelCodeBreakpoint(SH2_struct *context, u32 addr);
-codebreakpoint_struct *SH2GetBreakpointList(SH2_struct *context);
-void SH2ClearCodeBreakpoints(SH2_struct *context);
-
-static INLINE void SH2HandleBreakpoints(SH2_struct *context)
-{
-   int i;
-
-   for (i=0; i < context->bp.numcodebreakpoints; i++) {
-
-      if ((context->regs.PC == context->bp.codebreakpoint[i].addr) && context->bp.inbreakpoint == 0) {
-         context->bp.inbreakpoint = 1;
-         if (context->bp.BreakpointCallBack)
-             context->bp.BreakpointCallBack(context, context->bp.codebreakpoint[i].addr, context->bp.BreakpointUserData);
-         context->bp.inbreakpoint = 0;
-      }
-   }
-
-   if (context->bp.breaknow) {
-      context->bp.breaknow = 0;
-      context->bp.BreakpointCallBack(context, context->regs.PC, context->bp.BreakpointUserData);
-   }
-}
-
-
-int SH2AddMemoryBreakpoint(SH2_struct *context, u32 addr, u32 flags);
-int SH2DelMemoryBreakpoint(SH2_struct *context, u32 addr);
-memorybreakpoint_struct *SH2GetMemoryBreakpointList(SH2_struct *context);
-void SH2ClearMemoryBreakpoints(SH2_struct *context);
-void SH2HandleBackTrace(SH2_struct *context);
-u32 *SH2GetBacktraceList(SH2_struct *context, int *size);
 void SH2HandleStepOverOut(SH2_struct *context);
 void SH2HandleTrackInfLoop(SH2_struct *context);
 

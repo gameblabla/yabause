@@ -164,10 +164,10 @@ int YuiInit(int sh2core, int sndcore)   {
     PerSetKey(SDLK_DOWN, PERPAD_DOWN, padbits);
     PerSetKey(SDLK_LEFT, PERPAD_LEFT, padbits);
     PerSetKey(SDLK_RETURN, PERPAD_START, padbits);
-    PerSetKey(SDLK_SPACE, PERPAD_A, padbits);	//(X)
+    PerSetKey(SDLK_LCTRL, PERPAD_A, padbits);	//(X)
     PerSetKey(SDLK_LALT, PERPAD_B, padbits);			//(B)
     PerSetKey(SDLK_LSHIFT, PERPAD_C, padbits);	// <-
-    PerSetKey(SDLK_LCTRL, PERPAD_X, padbits);		//(A)
+    PerSetKey(SDLK_SPACE, PERPAD_X, padbits);		//(A)
     PerSetKey(SDLK_TAB, PERPAD_Y, padbits);		//(Y)
     PerSetKey(SDLK_BACKSPACE, PERPAD_Z, padbits);			// 0
     PerSetKey(SDLK_PAGEUP, PERPAD_RIGHT_TRIGGER, padbits);	//(R)

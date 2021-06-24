@@ -2719,10 +2719,6 @@ int SH2InterpreterInit(enum SHMODELTYPE model, SH2_struct *msh, SH2_struct *ssh)
          }
       }
 
-      SH2ClearCodeBreakpoints(SH1);
-      SH2ClearMemoryBreakpoints(SH1);
-      SH1->breakpointEnabled = 0;
-      SH1->backtraceEnabled = 0;
       SH1->stepOverOut.enabled = 0;
    }
    else if (model == SHMT_SH2)
@@ -2767,14 +2763,6 @@ int SH2InterpreterInit(enum SHMODELTYPE model, SH2_struct *msh, SH2_struct *ssh)
          }
       }
 
-      SH2ClearCodeBreakpoints(MSH2);
-      SH2ClearCodeBreakpoints(SSH2);
-      SH2ClearMemoryBreakpoints(MSH2);
-      SH2ClearMemoryBreakpoints(SSH2);
-      MSH2->breakpointEnabled = 0;
-      SSH2->breakpointEnabled = 0;  
-      MSH2->backtraceEnabled = 0;
-      SSH2->backtraceEnabled = 0;
       MSH2->stepOverOut.enabled = 0;
       SSH2->stepOverOut.enabled = 0;
    }
