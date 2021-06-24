@@ -110,7 +110,9 @@ typedef struct
    u8 IsSSH2Running;
    u64 OneFrameTime;
    u64 tickfreq;
+   #ifdef HLE_BIOS
    int emulatebios;
+   #endif
    int usequickload;
    int playing_ssf;
    int use_cd_block_lle;

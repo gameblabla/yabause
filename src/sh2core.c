@@ -2294,6 +2294,7 @@ u32 sh2_dma_access(u32 addr, u32 data, int is_read, int size)
    }
    else if (addr >= 0x5800000 && addr <= 0x58fffff)
    {
+	   /*
       //cs2
       if (yabsys.use_cd_block_lle)
       {
@@ -2317,7 +2318,7 @@ u32 sh2_dma_access(u32 addr, u32 data, int is_read, int size)
             return 0;
          }
       }
-      else
+      else*/
       {
          if (is_read)
          {

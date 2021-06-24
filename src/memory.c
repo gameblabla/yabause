@@ -31,7 +31,6 @@
 #include <ctype.h>
 
 #include "memory.h"
-#include "coffelf.h"
 #include "cs0.h"
 #include "cs1.h"
 #include "cs2.h"
@@ -672,7 +671,7 @@ void MappedMemoryInit(SH2_struct *msh2, SH2_struct *ssh2, SH2_struct *sh1)
                                            &Cs1WriteByte,
                                            &Cs1WriteWord,
                                            &Cs1WriteLong);
-      if (yabsys.use_cd_block_lle)
+      /*if (yabsys.use_cd_block_lle)
       {
          FillMemoryArea(sh2[i], 0x580, 0x58F,
             &Cs2ReadByte,
@@ -682,7 +681,7 @@ void MappedMemoryInit(SH2_struct *msh2, SH2_struct *ssh2, SH2_struct *sh1)
             &sh2_ygr_a_bus_write_word,
             &sh2_ygr_a_bus_write_long);
       }
-      else
+      else*/
       {
          FillMemoryArea(sh2[i], 0x580, 0x58F, 
             &Cs2ReadByte,
@@ -754,7 +753,7 @@ void MappedMemoryInit(SH2_struct *msh2, SH2_struct *ssh2, SH2_struct *sh1)
                                            &Sh2HighWramMemoryWriteLong);
    }
 
-   if (yabsys.use_cd_block_lle)
+   /*if (yabsys.use_cd_block_lle)
    {
       // SH1
       FillMemoryArea(sh1, 0x000, 0xFFF, &Sh2UnhandledMemoryReadByte,
@@ -763,7 +762,7 @@ void MappedMemoryInit(SH2_struct *msh2, SH2_struct *ssh2, SH2_struct *sh1)
                                         &Sh2UnhandledMemoryWriteByte,
                                         &Sh2UnhandledMemoryWriteWord,
                                         &Sh2UnhandledMemoryWriteLong);
-   }
+   }*/
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1154,7 +1153,6 @@ int MappedMemoryLoad(SH2_struct *sh, const char *filename, u32 addr)
    long filesize;
    u8 *buffer;
    u32 i;
-   size_t num_read = 0;
 
    if (!filename)
       return -1;
@@ -1181,7 +1179,7 @@ int MappedMemoryLoad(SH2_struct *sh, const char *filename, u32 addr)
       return -2;
    }
 
-   num_read = fread((void *)buffer, 1, filesize, fp);
+   fread((void *)buffer, 1, filesize, fp);
    fclose(fp);
 
    for (i = 0; i < filesize; i++)
@@ -1220,45 +1218,6 @@ int MappedMemorySave(SH2_struct *sh, const char *filename, u32 addr, u32 size)
    free(buffer);
 
    return 0;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void MappedMemoryLoadExec(const char *filename, u32 pc)
-{
-   char *p;
-   size_t i;
-
-   if ((p = strrchr(filename, '.')))
-   {
-      p = strdup(p);
-      for (i = 0; i < strlen(p); i++)
-         p[i] = toupper(p[i]);
-      if (strcmp(p, ".COF") == 0 || strcmp(p, ".COFF") == 0)
-      {
-         MappedMemoryLoadCoff(filename);
-         free(p);
-         return;
-      }
-      else if(strcmp(p, ".ELF") == 0)
-      {
-         MappedMemoryLoadElf(filename);
-         free(p);
-         return;
-      }
-
-      free(p);
-   }
-
-   YabauseResetNoLoad();
-
-   // Setup the vector table area, etc.
-   YabauseSpeedySetup();
-
-   MappedMemoryLoad(MSH2, filename, pc);
-   SH2GetRegisters(MSH2, &MSH2->regs);
-   MSH2->regs.PC = pc;
-   SH2SetRegisters(MSH2, &MSH2->regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1321,7 +1280,6 @@ int YabSaveStateBuffer(void ** buffer, size_t * size)
 {
    FILE * fp;
    int status;
-   size_t num_read = 0;
 
    if (buffer != NULL) *buffer = NULL;
    *size = 0;
@@ -1342,7 +1300,7 @@ int YabSaveStateBuffer(void ** buffer, size_t * size)
    if (buffer != NULL)
    {
       *buffer = malloc(*size);
-      num_read = fread(*buffer, 1, *size, fp);
+	   fread(*buffer, 1, *size, fp);
    }
 
    fclose(fp);

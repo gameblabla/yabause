@@ -45,7 +45,9 @@
 #include "vidsoft.h"
 #include "vdp2.h"
 #include "yui.h"
+#ifdef HLE_BIOS
 #include "bios.h"
+#endif
 #include "movie.h"
 //#include "osdcore.h"
 #ifdef HAVE_LIBSDL
@@ -320,10 +322,14 @@ int YabauseInit(yabauseinit_struct *init)
          YabSetError(YAB_ERR_FILENOTFOUND, (void *)init->biospath);
          return -2;
       }
+      #ifdef HLE_BIOS
       yabsys.emulatebios = 0;
+      #endif
    }
+   #ifdef HLE_BIOS
    else
       yabsys.emulatebios = 1;
+   #endif
 
    /*if (yabsys.emulatebios && yabsys.use_cd_block_lle)
    {
@@ -371,16 +377,22 @@ int YabauseInit(yabauseinit_struct *init)
 	   return 0;
    }
 
-   if (yabsys.usequickload || yabsys.emulatebios)
+   if (yabsys.usequickload
+#ifdef HLE_BIOS
+   || yabsys.emulatebios
+#endif
+   )
    {
       if (YabauseQuickLoadGame() != 0)
       {
+#ifdef HLE_BIOS
          if (yabsys.emulatebios)
          {
             YabSetError(YAB_ERR_CANNOTINIT, _("Game"));
             return -2;
          }
          else
+#endif
             YabauseResetNoLoad();
       }
    }
@@ -502,13 +514,19 @@ void YabauseReset(void) {
 
    YabauseResetNoLoad();
 
-   if (yabsys.usequickload || yabsys.emulatebios)
+   if (yabsys.usequickload
+#ifdef HLE_BIOS
+    || yabsys.emulatebios
+#endif
+    )
    {
       if (YabauseQuickLoadGame() != 0)
       {
+#ifdef HLE_BIOS 
          if (yabsys.emulatebios)
             YabSetError(YAB_ERR_CANNOTINIT, _("Game"));
          else
+#endif
             YabauseResetNoLoad();
       }
    }
@@ -843,6 +861,7 @@ int YabauseEmulate(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void YabauseStartSlave(void) {
+#ifdef HLE_BIOS
    if (yabsys.emulatebios)
    {
       SSH2->MappedMemoryWriteLong(SSH2, 0xFFFFFFE0, 0xA55A03F1); // BCR1
@@ -872,6 +891,7 @@ void YabauseStartSlave(void) {
       SH2SetRegisters(SSH2, &SSH2->regs);
    }
    else
+#endif
       SH2PowerOn(SSH2);
 
    yabsys.IsSSH2Running = 1;
@@ -939,9 +959,11 @@ void YabauseSpeedySetup(void)
    u32 data;
    int i;
 
+   #ifdef HLE_BIOS
    if (yabsys.emulatebios)
       BiosInit();
    else
+   #endif
    {
       // Setup the vector table area, etc.(all bioses have it at 0x00000600-0x00000810)
       for (i = 0; i < 0x210; i+=4)

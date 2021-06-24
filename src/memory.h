@@ -415,7 +415,6 @@ result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
 
 int MappedMemoryLoad(SH2_struct *sh, const char *filename, u32 addr);
 int MappedMemorySave(SH2_struct *sh, const char *filename, u32 addr, u32 size);
-void MappedMemoryLoadExec(const char *filename, u32 pc);
 
 int LoadSH1Rom(const char *filename);
 int LoadMpegRom(const char *filename);

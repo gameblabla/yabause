@@ -62,7 +62,7 @@ static INLINE u32 COLSATSTRIPPRIORITY(u32 pixel) { return (0xFF000000 | pixel); 
 				(l & 0xFF000000)
 #endif
 
-#ifdef __arm__
+#if defined(__arm__) || defined(LOWER_PRECISION)
 typedef float myreal;
 #else
 typedef double myreal;

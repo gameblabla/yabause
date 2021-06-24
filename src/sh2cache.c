@@ -537,11 +537,12 @@ u32 sh2_cache_refill_read(SH2_struct *sh, u32 addr)
    else if (addr >= 0x5800000 && addr <= 0x58fffff)
    {
       //cs2
+      /*
       if (yabsys.use_cd_block_lle)
       {
          return ygr_a_bus_read_long(addr);
       }
-      else
+      else*/
       {
          return Cs2ReadLong(MSH2, addr);
       }

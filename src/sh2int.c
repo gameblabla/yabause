@@ -30,7 +30,9 @@
 #include "debug.h"
 #include "error.h"
 #include "memory.h"
+#ifdef HLE_BIOS
 #include "bios.h"
+#endif
 #include "yabause.h"
 #include "ygr.h"
 #include "sh7034.h"
@@ -198,11 +200,13 @@ static void FASTCALL SH2undecoded(SH2_struct * sh)
 {
    int vectnum;
 
+   #ifdef HLE_BIOS
    if (yabsys.emulatebios)
    {
       if (BiosHandleFunc(sh))
          return;
    }
+   #endif
 
    YabSetError(YAB_ERR_SH2INVALIDOPCODE, sh);      
 
