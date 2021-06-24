@@ -28,7 +28,9 @@
 #include "memory.h"
 #include "debug.h"
 #include <stdarg.h>
+#ifdef MPEG_CARD
 #include "mpeg_card.h"
+#endif
 #ifdef WIN32
 #include "windows.h"
 #endif
@@ -75,8 +77,9 @@ struct Ygr
       u16 RR2;
       u16 RR3;
       u16 RR4;
-
+	  #ifdef MPEG_CARD
       u16 MPEGRGB;
+      #endif
    }regs;
 
    int fifo_ptr;
@@ -244,10 +247,12 @@ u8 ygr_sh1_read_byte(u32 addr)
 
 u16 ygr_sh1_read_word(u32 addr)
 {
+   #ifdef MPEG_CARD
    if ((addr & 0xf00000) == 0x100000)
    {
       return mpeg_card_read_word(addr);
    }
+   #endif
    CDTRACE("rwlsi: %08X\n", addr);
    switch (addr & 0xffff) {
    case 0:
@@ -299,11 +304,13 @@ void ygr_sh1_write_byte(u32 addr,u8 data)
 
 void ygr_sh1_write_word(u32 addr, u16 data)
 {
+   #ifdef MPEG_CARD
    if ((addr & 0xf00000) == 0x100000)
    {
       mpeg_card_write_word(addr, data);
       return;
    }
+   #endif
    CDTRACE("wwlsi: %08X %04X\n", addr, data);
    switch (addr & 0xffff) {
    case 0:
@@ -472,9 +479,11 @@ u16 FASTCALL ygr_a_bus_read_word(u32 addr) {
          ygr_cxt.mbx_status |= 2;
          CDLOG("abus cdb response: CR1: %04x CR2: %04x CR3: %04x CR4: %04x HIRQ: %04x Status: %s\n", ygr_cxt.regs.RR1, ygr_cxt.regs.RR2, ygr_cxt.regs.RR3, ygr_cxt.regs.RR4, ygr_cxt.regs.HIRQ, get_status(ygr_cxt.regs.RR1));
          return ygr_cxt.regs.RR4;
+      #ifdef MPEG_CARD
       case 0x28:
       case 0x2A:
          return ygr_cxt.regs.MPEGRGB;
+      #endif
       default:
          LOG("ygr\t: Undocumented register read %08X\n", addr);
          break;
@@ -768,10 +777,12 @@ void FASTCALL ygr_a_bus_write_word(u32 addr, u16 val) {
          SH2SendInterrupt(SH1, 70, (sh1_cxt.onchip.intc.iprb >> 4) & 0xf);
          ygr_a_bus_cd_cmd_log();
          return;
+      #ifdef MPEG_CARD
       case 0x28:
       case 0x2A:
          ygr_cxt.regs.MPEGRGB = val;
          return;
+      #endif
       default:
          LOG("ygr\t:Undocumented register write %08X\n", addr);
          break;
@@ -812,8 +823,10 @@ u32 FASTCALL ygr_a_bus_read_long(u32 addr) {
       case 0x24:
          ygr_cxt.mbx_status |= 2;
          return ((ygr_cxt.regs.RR4 << 16) | ygr_cxt.regs.RR4);
+      #ifdef MPEG_CARD
       case 0x28:
          return ((ygr_cxt.regs.MPEGRGB << 16) | ygr_cxt.regs.MPEGRGB);
+      #endif
       default:
          LOG("ygr\t: Undocumented register read %08X\n", addr);
          break;

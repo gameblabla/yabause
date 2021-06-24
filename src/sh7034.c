@@ -31,7 +31,9 @@
 #include "debug.h"
 #include <stdarg.h>
 #include "cd_drive.h"
+#ifdef MPEG_CARD
 #include "mpeg_card.h"
+#endif
 
 //#define SH1_MEM_DEBUG
 #ifdef SH1_MEM_DEBUG
@@ -4341,7 +4343,9 @@ u8 memory_map_read_byte(struct Sh1* sh1, u32 addr)
       {
          //external memory space
          //mpeg rom
+         #ifdef MPEG_CARD
          return T2ReadByte(SH1MpegRom, addr & 0x7FFFF);
+         #endif
       }
       else if (!sh1->onchip.bsc.bcr)
       {
@@ -4438,8 +4442,10 @@ u16 memory_map_read_word(struct Sh1* sh1, u32 addr)
       if (a27)
       {
          //external memory space
+         #ifdef MPEG_CARD
          //mpeg rom
          return T2ReadWord(SH1MpegRom, addr & 0x7FFFF);
+         #endif
       }
       else if (!sh1->onchip.bsc.bcr)
       {
@@ -4650,9 +4656,11 @@ u32 memory_map_read_long(struct Sh1* sh1, u32 addr)
       if (a27)
       {
          //external memory space
+         #ifdef MPEG_CARD
          //mpeg rom area
 
          return T2ReadLong(SH1MpegRom, addr & 0x7FFFF);
+         #endif
       }
       else if (!sh1->onchip.bsc.bcr)
       {
@@ -4966,8 +4974,9 @@ void sh1_init_func()
    memset(SH1Dram, 0, 0x80000);
 
    cdd_reset();
-
+   #ifdef MPEG_CARD
    mpeg_card_init();
+   #endif
 
    sh1_cxt.onchip.pbdr = 0x40c;
 }
@@ -5424,11 +5433,13 @@ void test_mem_map(struct Sh1* sh1)
    }
 
    //mpeg rom
+   #ifdef MPEG_CARD
    for (i = 0; i < 0x7FFFF; i += 4)
    {
       memory_map_write_long(sh1, 0xe000000 + i, 0xdeadbeef);
       memory_map_read_long(sh1, 0xe000000 + i);
    }
+   #endif
 
    for (i = 0; i < 0x7FFFF; i += 2)
    {
@@ -5688,8 +5699,10 @@ void tick_dma(int which)
       }
    }
 }
-int print_mpeg_jump = 0;
 
+#ifdef MPEG_CARD
+int print_mpeg_jump = 0;
+#endif
 
 void sh1_dma_exec(s32 cycles)
 {

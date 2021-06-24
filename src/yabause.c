@@ -79,7 +79,9 @@
 
 #include "sh7034.h"
 #include "cd_drive.h"
+#ifdef MPEG_CARD
 #include "mpeg_card.h"
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -209,8 +211,10 @@ int YabauseInit(yabauseinit_struct *init)
    if ((SH1Dram = T2MemoryInit(0x80000)) == NULL)
       return -1;
 
+   #ifdef MPEG_CARD
    if ((SH1MpegRom = T2MemoryInit(0x80000)) == NULL)
       return -1;
+   #endif
 
    // Initialize CD Block 
   /* if (init->use_cd_block_lle)
@@ -775,7 +779,9 @@ int YabauseEmulate(void) {
             // VBlankOUT
             //PROFILE_START("VDP1/VDP2");
             Vdp2VBlankOUT();
+            #ifdef MPEG_CARD
             set_mpeg_video_irq();//guessing: set video irq once per frame
+            #endif
             yabsys.LineCount = 0;
             oneframeexec = 1;
             //PROFILE_STOP("VDP1/VDP2");
