@@ -26,10 +26,6 @@
 #include <stdlib.h>
 #include "cs0.h"
 #include "error.h"
-#ifdef JAPMODEM
-#include "japmodem.h"
-#endif
-#include "netlink.h"
 
 cartridge_struct *CartridgeArea;
 
@@ -1199,13 +1195,6 @@ int CartInit(const char * filename, int type)
          CartridgeArea->Cs0WriteLong = &DRAM32MBITCs0WriteLong;
          break;
       }
-      case CART_NETLINK:
-      {
-         CartridgeArea->cartid = 0xFF;
-         CartridgeArea->Cs2ReadByte = &NetlinkReadByte;
-         CartridgeArea->Cs2WriteByte = &NetlinkWriteByte;
-         break;
-      }
       case CART_ROM16MBIT: // 16 Mbit Rom Cart
       {
          if ((CartridgeArea->rom = T1MemoryInit(0x200000)) == NULL)
@@ -1226,59 +1215,6 @@ int CartInit(const char * filename, int type)
          CartridgeArea->Cs0WriteLong = &ROM16MBITCs0WriteLong;
          break;
       }
-      #ifdef JAPMODEM
-      case CART_JAPMODEM: // Sega Saturn Modem(Japanese)
-      {
-         CartridgeArea->cartid = 0xFF;
-
-         CartridgeArea->Cs0ReadByte = &JapModemCs0ReadByte;
-         CartridgeArea->Cs0ReadWord = &JapModemCs0ReadWord;
-         CartridgeArea->Cs0ReadLong = &JapModemCs0ReadLong;
-
-         CartridgeArea->Cs1ReadByte = &JapModemCs1ReadByte;
-         CartridgeArea->Cs1ReadWord = &JapModemCs1ReadWord;
-         CartridgeArea->Cs1ReadLong = &JapModemCs1ReadLong;
-         CartridgeArea->Cs1WriteByte = &JapModemCs1WriteByte;
-         CartridgeArea->Cs1WriteWord = &JapModemCs1WriteWord;
-         CartridgeArea->Cs1WriteLong = &JapModemCs1WriteLong;
-
-         CartridgeArea->Cs2ReadByte = &JapModemCs2ReadByte;
-         CartridgeArea->Cs2WriteByte = &JapModemCs2WriteByte;
-         break;
-      }
-      #endif
-      case CART_USBDEV: // USB Dev Cartridge
-      {
-         if ((CartridgeArea->rom = T2MemoryInit(0x40000)) == NULL)
-            return -1;
-
-         if ((CartridgeArea->dram = T1MemoryInit(0x400000)) == NULL)
-            return -1;
-
-         // No extra dram, etc. built-in
-         CartridgeArea->cartid = 0;
-
-         // Load AR firmware to memory
-         if (T123Load(CartridgeArea->rom, 0x40000, 2, filename) != 0)
-            return -1;
-
-         // ID for SST39SF010A
-         vendorid = 0xBF;
-         deviceid = 0xB5;
-
-         flstate0 = FL_READ;
-         flstate1 = FL_READ;
-
-         // Setup Functions
-         CartridgeArea->Cs0ReadByte = &AR4MCs0ReadByte;
-         CartridgeArea->Cs0ReadWord = &AR4MCs0ReadWord;
-         CartridgeArea->Cs0ReadLong = &AR4MCs0ReadLong;
-         CartridgeArea->Cs0WriteByte = &AR4MCs0WriteByte;
-         CartridgeArea->Cs0WriteWord = &AR4MCs0WriteWord;
-         CartridgeArea->Cs0WriteLong = &AR4MCs0WriteLong;
-         break;
-      }
-
       default: // No Cart
       {
          CartridgeArea->cartid = 0xFF;

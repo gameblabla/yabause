@@ -55,10 +55,10 @@ typedef struct
    int skip_load;//skip loading in YabauseInit so tests can be run without a bios
    int play_ssf;
    int use_new_scsp;
-   int use_cd_block_lle;
+   //int use_cd_block_lle;
    int use_sh2_dma_timing;
    int use_scu_dma_timing;
-   int sh2_cache_enabled;
+  // int sh2_cache_enabled;
    int use_scsp_dsp_dynarec;
    int use_scu_dsp_jit;
 } yabauseinit_struct;

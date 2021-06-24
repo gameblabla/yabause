@@ -143,7 +143,7 @@ int YuiInit(int sh2core, int sndcore)   {
     yinit.buppath = buppath[0]? buppath : NULL;
     yinit.mpegpath = mpegpath[0]? mpegpath : NULL;
     yinit.cartpath = cartpath[0]? cartpath : NULL;
-    yinit.frameskip = 4;
+    yinit.frameskip = 1;
     yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
     yinit.clocksync = 0;
 	yinit.play_ssf = 0;
@@ -204,6 +204,11 @@ void YuiErrorMsg(const char *error_text)    {
     exit(-1);
 }
 
+#ifdef GKD350H
+SDL_Surface *screen = NULL;
+SDL_Surface *rl_screen = NULL;
+#endif
+
 void YuiSwapBuffers(void)   {
     // Show the screen !
     static int old_width = 0;
@@ -211,19 +216,44 @@ void YuiSwapBuffers(void)   {
     int buf_width, buf_height;
 
     VIDCore->GetGlSize(&buf_width, &buf_height);
+    #ifndef GKD350H
 	// Soft part
     static SDL_Surface *screen = NULL;
+    #endif
 
     if ((old_width!=buf_width) || (old_height!=buf_height)) {
     	// set new mode
-    	screen = SDL_SetVideoMode(buf_width, buf_height, 16, SDL_HWSURFACE
-    	#ifdef SDL_TRIPLEBUF
-    	| SDL_TRIPLEBUF
+    	SDL_ShowCursor(SDL_DISABLE);
+    	#ifdef GKD350H
+    	if (screen)
+    	{
+			SDL_FreeSurface(screen);
+		}
+    	screen = SDL_CreateRGBSurface(SDL_HWSURFACE, buf_width, buf_height, 16, 0,0,0,0);
+    	memset(screen->pixels, 0, (buf_width * buf_height) *2);
     	#else
-    	| SDL_DOUBLEBUF
-    	#endif
-    	);	// create a window
-        SDL_ShowCursor(SDL_DISABLE);
+    	if (buf_width == 0 || buf_height == 0)
+    	{
+			screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE
+			#ifdef SDL_TRIPLEBUF
+			| SDL_TRIPLEBUF
+			#else
+			| SDL_DOUBLEBUF
+			#endif
+			);	// create a window
+		}
+    	else
+    	{
+			screen = SDL_SetVideoMode(buf_width, buf_height, 16, SDL_HWSURFACE
+			#ifdef SDL_TRIPLEBUF
+			| SDL_TRIPLEBUF
+			#else
+			| SDL_DOUBLEBUF
+			#endif
+			);	// create a window
+		}
+		#endif
+        
         #ifdef DEBUG
     	printf("switch screen from %dx%d to %dx%d\n", old_width, old_height, buf_width, buf_height);
     	#endif
@@ -243,10 +273,16 @@ void YuiSwapBuffers(void)   {
 
 	//SDL_BlitSurface(pixdata, NULL, screen, NULL);
 	//screen->pixels = dispbuffer;
+	#ifdef GKD350H
+	memcpy(screen->pixels, dispbuffer, (buf_width * buf_height) * 2);
+	SDL_SoftStretch(screen, NULL, rl_screen, NULL);
+	SDL_Flip(rl_screen);
+	#else
 	memcpy(screen->pixels, dispbuffer, (buf_width * buf_height) * 2);
 	
 	// update the screen buffer
 	SDL_Flip(screen);
+	#endif
 }
 
 // utility fonction
@@ -289,13 +325,20 @@ int main(int argc, char *argv[])    {
     int core;
 	int snd;
     int parse_status;
+    
+    SDL_Init(SDL_INIT_VIDEO);
+    #ifdef GKD350H
+    SDL_ShowCursor(SDL_DISABLE);
+	rl_screen = SDL_SetVideoMode(320, 240, 16, SDL_HWSURFACE | SDL_TRIPLEBUF);	// create a window
+    #endif
+    
 #ifdef SH2_DYNAREC
     core = SH2CORE_DYNAREC;
 #else
 	core = 0;
 #endif
     snd = SNDCORE_SDL;
-	printf("Yabause for Pandora\n===================\n\n");
+	printf("Yabause for OpenDingux\n");
 
     // parse command lines arguments
     parse_status = 0;	

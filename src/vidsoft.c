@@ -1199,10 +1199,10 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
       fixed32 xmul, ymul, C, F;
       u32 coefx, coefy;
       u32 rcoefx, rcoefy;
-      u32 lineAddr, lineColor, lineInc;
+      u32 lineAddr = 0, lineColor, lineInc = 0;
       u16 lineColorAddr;
 
-      fixed32 xmul2, ymul2, C2, F2;
+      fixed32 xmul2 = 0, ymul2 = 0, C2 = 0, F2 = 0;
       u32 coefx2, coefy2;
       u32 rcoefx2, rcoefy2;
       screeninfo_struct sinfo2;
@@ -1211,7 +1211,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
       clipping_struct rpwindow[2];
       int userpwindow = 0;
       int isrplinewindow = 0;
-      u32 rplinewnd0addr, rplinewnd1addr;
+      u32 rplinewnd0addr = 0, rplinewnd1addr = 0;
 
       if ((regs->RPMD & 3) == 2)
          p2 = &parameter[1 - info->rotatenum];
@@ -3224,7 +3224,7 @@ static void drawQuad(s16 tl_x, s16 tl_y, s16 bl_x, s16 bl_y, s16 tr_x, s16 tr_y,
 	float rightLineStep = 1; 
 
 	//a lookup table for the gouraud colors
-	COLOR colors[4];
+	COLOR colors[4] = {0};
 
    if (is_pre_clipped(tl_x, tl_y, bl_x, bl_y, tr_x, tr_y, br_x, br_y, regs))
       return;

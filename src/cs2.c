@@ -27,10 +27,6 @@
 #include "cs2.h"
 #include "debug.h"
 #include "error.h"
-#ifdef JAPMODEM
-#include "japmodem.h"
-#endif
-#include "netlink.h"
 #include "scsp.h"
 #include "scu.h"
 #include "smpc.h"
@@ -629,20 +625,6 @@ int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, 
 
    Cs2Reset();
 
-   // If Modem is connected, set the registers
-   if(Cs2Area->carttype == CART_NETLINK)
-   {
-      if ((ret = NetlinkInit(modemip, modemport)) != 0)
-         return ret;
-   }
-   #ifdef JAPMODEM
-   else if (Cs2Area->carttype == CART_JAPMODEM)
-   {
-      if ((ret = JapModemInit(modemip, modemport)) != 0)
-         return ret;
-   }
-   #endif
-
    if ((cdip = (ip_struct *) calloc(sizeof(ip_struct), 1)) == NULL)
       return -1;
 
@@ -704,13 +686,6 @@ void Cs2DeInit(void) {
       if (Cs2Area->cdi != NULL) {
          Cs2Area->cdi->DeInit();
       }
-
-      if(Cs2Area->carttype == CART_NETLINK)
-         NetlinkDeInit();
-      #ifdef JAPMODEM
-      else if (Cs2Area->carttype == CART_JAPMODEM)
-         JapModemDeInit();
-      #endif
 
       free(Cs2Area);
    }
@@ -1023,13 +998,6 @@ void Cs2Exec(u32 timing) {
 
       Cs2Area->reg.HIRQ |= CDB_HIRQ_SCDQ;
    }
-
-   if(Cs2Area->carttype == CART_NETLINK)
-      NetlinkExec(timing);
-   #ifdef JAPMODEM
-   else if (Cs2Area->carttype == CART_JAPMODEM)
-      JapModemExec(timing);
-   #endif
 }
 
 //////////////////////////////////////////////////////////////////////////////

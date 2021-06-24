@@ -285,7 +285,7 @@ void mpeg_card_write_word(u32 addr, u16 data)
       return;
    }
 
-   assert(0);
+   //assert(0);
 }
 
 u16 mpeg_card_read_word(u32 addr)
@@ -311,7 +311,7 @@ u16 mpeg_card_read_word(u32 addr)
    case 0x80008:
       return mpeg_card.reg_80008;
    }
-//   assert(0);
+//   //assert(0);
 
    return 0;
 }
@@ -538,7 +538,7 @@ void yab_mpeg_init()
   ret = av_image_alloc(out_buf,out_linesize, 320, 240,AV_PIX_FMT_RGB32, 1);
 
   if(!ret)
-    assert(0);
+    //assert(0);
 }
 
 void write_frame_to_video_buffer(struct YabCodec * c)
@@ -663,7 +663,7 @@ void yab_mpeg_play_file(struct YabCodec * c, char * filename)
   if(!c->file)
   {
     YabErrorMsg("couldn't open file");
-    assert(0);
+    //assert(0);
     return;
   }
 }

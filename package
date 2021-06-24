@@ -26,8 +26,9 @@ Terminal=false
 Type=Application
 Categories=emulators;
 X-OD-NeedsDownscaling=true
+MimeType=application/x-cue;
 selectorbrowser=true
-SelectorFilter=mds, MDS, cue, CUE, ccd, CCD
+SelectorFilter=cue, CUE
 ' > opk/default."$1".desktop
 
 mksquashfs ./opk yabause_"$1".opk -all-root -noappend -no-exports -no-xattrs

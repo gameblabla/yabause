@@ -1350,7 +1350,7 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
    size_t num_read = 0;
    track_info_struct *track=NULL;
 
-   assert(disc.session);
+   //assert(disc.session);
 
    memset(buffer, 0, 2448);
 

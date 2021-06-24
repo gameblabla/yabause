@@ -30,7 +30,6 @@
 #endif
 #include <string.h>
 #include "yabause.h"
-#include "cheat.h"
 #include "cs0.h"
 #include "cs2.h"
 #include "debug.h"
@@ -142,18 +141,19 @@ int YabauseInit(yabauseinit_struct *init)
    // Need to set this first, so init routines see it
    yabsys.UseThreads = init->usethreads;
    yabsys.NumThreads = init->numthreads;
-   yabsys.use_cd_block_lle = init->use_cd_block_lle;
+   yabsys.use_cd_block_lle = 0/*init->use_cd_block_lle*/;
+   /*
    if (yabsys.use_cd_block_lle)
    {
       yabsys.use_sh2_dma_timing = 1;
       yabsys.use_scu_dma_timing = 1;
       yabsys.sh2_cache_enabled = 1;
    }
-   else
+   else*/
    {
       yabsys.use_sh2_dma_timing = init->use_sh2_dma_timing;
       yabsys.use_scu_dma_timing = init->use_scu_dma_timing;
-      yabsys.sh2_cache_enabled = init->sh2_cache_enabled;
+     //yabsys.sh2_cache_enabled = init->sh2_cache_enabled;
    }
 
    // Initialize both cpu's
@@ -211,7 +211,7 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
 
    // Initialize CD Block 
-   if (init->use_cd_block_lle)
+  /* if (init->use_cd_block_lle)
    {
 #if defined(SH2_DYNAREC)
       if (init->sh1coretype == SH2CORE_DYNAREC)
@@ -252,7 +252,7 @@ int YabauseInit(yabauseinit_struct *init)
          }
       }
    }
-
+*/
    if (Cs2Init(init->carttype, init->cdcoretype, init->cdpath, init->mpegpath, init->modemip, init->modemport) != 0)
    {
       YabSetError(YAB_ERR_CANNOTINIT, _("CS2"));
@@ -297,14 +297,6 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
    }
 
-   #ifdef HAVE_CHEATS
-   if (CheatInit() != 0)
-   {
-      YabSetError(YAB_ERR_CANNOTINIT, _("Cheat System"));
-      return -1;
-   }
-   #endif
-
    MappedMemoryInit(MSH2, SSH2, SH1);
    YabauseSetVideoFormat(init->videoformattype);
    YabauseChangeTiming(CLKTYPE_26MHZ);
@@ -333,11 +325,11 @@ int YabauseInit(yabauseinit_struct *init)
    else
       yabsys.emulatebios = 1;
 
-   if (yabsys.emulatebios && yabsys.use_cd_block_lle)
+   /*if (yabsys.emulatebios && yabsys.use_cd_block_lle)
    {
       YabSetError(YAB_ERR_CANNOTINIT, _("CD Block. A real bios must be defined and enabled for CD Block LLE. Emulated bios not supported."));
       return -1;
-   }
+   }*/
 
    yabsys.usequickload = 0;
 
@@ -466,9 +458,6 @@ void YabauseDeInit(void) {
    SmpcDeInit();
    PerDeInit();
    VideoDeInit();
-   #ifdef HAVE_CHEATS
-   CheatDeInit();
-   #endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -487,8 +476,8 @@ void YabauseResetNoLoad(void) {
 
    // Reset CS0 area here
    // Reset CS1 area here
-   if (yabsys.use_cd_block_lle)
-      SH2Reset(SH1);
+   /*if (yabsys.use_cd_block_lle)
+      SH2Reset(SH1);*/
    Cs2Reset();
    ScuReset();
    ScspReset();
@@ -497,11 +486,11 @@ void YabauseResetNoLoad(void) {
    SmpcReset();
 
    SH2PowerOn(MSH2);
-   if (yabsys.use_cd_block_lle)
+   /*if (yabsys.use_cd_block_lle)
    {
       sh1_init_func();
       SH2PowerOn(SH1);
-   }
+   }*/
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -583,14 +572,15 @@ int YabauseEmulate(void) {
    const u32 usecinc =
       yabsys.DecilineMode ? yabsys.DecilineUsec : yabsys.DecilineUsec * 10;
 #ifndef USE_SCSP2
-   unsigned int m68kcycles;       // Integral M68k cycles per call
-   unsigned int m68kcenticycles;  // 1/100 M68k cycles per call
-	u32 m68k_cycles_per_deciline, scsp_cycles_per_deciline, sh1_cycles_per_deciline, cdd_cycles_per_deciline;
+	unsigned int m68kcycles = 0;       // Integral M68k cycles per call
+	unsigned int m68kcenticycles = 0;  // 1/100 M68k cycles per call
+	u32 m68k_cycles_per_deciline, scsp_cycles_per_deciline;
+	// sh1_cycles_per_deciline, cdd_cycles_per_deciline, unused
 	int lines, frames = 0;
 
    m68k_cycles_per_deciline = 0;
    scsp_cycles_per_deciline = 0;
-   sh1_cycles_per_deciline = 0;
+   //sh1_cycles_per_deciline = 0; Unused
 
    lines = 0;
    frames = 0;
@@ -606,11 +596,11 @@ int YabauseEmulate(void) {
       frames = 60;
    }
 
-   if (yabsys.use_cd_block_lle)
+   /*if (yabsys.use_cd_block_lle)
    {
       sh1_cycles_per_deciline = get_cycles_per_line_division(20 * 1000000, frames, lines, 10);//20mhz
       cdd_cycles_per_deciline = get_cycles_per_line_division(1000000, frames, lines, 10);//timing is now in usec
-   }
+   }*/
    if(use_new_scsp)
    {
       scsp_cycles_per_deciline = get_cycles_per_line_division(44100 * 512, frames, lines, 10);
@@ -761,9 +751,6 @@ int YabauseEmulate(void) {
             SmpcINTBACKEnd();
             Vdp2VBlankIN();
             //PROFILE_STOP("vblankin");
-            #ifdef HAVE_CHEATS
-            CheatDoPatches();
-            #endif
          }
          else if (yabsys.LineCount == yabsys.MaxLineCount)
          {
@@ -815,7 +802,7 @@ int YabauseEmulate(void) {
          saved_scsp_cycles -= scsp_integer_part << SCSP_FRACTIONAL_BITS;
       }
 #endif
-      if(yabsys.use_cd_block_lle)
+      /*if(yabsys.use_cd_block_lle)
       {
          u32 sh1_integer_part = 0;
          u32 cdd_integer_part = 0;
@@ -829,7 +816,7 @@ int YabauseEmulate(void) {
          cdd_integer_part = saved_cdd_cycles >> SCSP_FRACTIONAL_BITS;
          cd_drive_exec(&cdd_cxt, cdd_integer_part);
          saved_cdd_cycles -= cdd_integer_part << SCSP_FRACTIONAL_BITS;
-      }
+      }*/
 
       //PROFILE_STOP("Total Emulation");
    }

@@ -24,7 +24,6 @@
 #include "sh2core.h"
 #include "sh2idle.h"
 #include "sh2int.h"
-#include "sh2d.h"
 #include "memory.h"
 
 #define MAX_CYCLE_CHECK 14

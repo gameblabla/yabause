@@ -1277,7 +1277,7 @@ void onchip_write_timer_byte(struct Onchip * regs, u32 addr, int which_timer, u8
       break;
    }
 
-   assert(0);
+   //assert(0);
 }
 
 u8 onchip_read_timer_byte(struct Onchip * regs, u32 addr, int which_timer)
@@ -1331,7 +1331,7 @@ u8 onchip_read_timer_byte(struct Onchip * regs, u32 addr, int which_timer)
       break;
    }
 
-   assert(0);
+   //assert(0);
    return 0;
 }
 
@@ -1368,7 +1368,7 @@ void onchip_write_timer_word(struct Onchip * regs, u32 addr, int which_timer, u1
       break;
    }
 
-   assert(0);
+   //assert(0);
 }
 
 void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
@@ -1435,8 +1435,8 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
                regs->sci[0].ssr &= ~SCI_TEND;
             return;
          }
-         else
-            assert(0);
+         /*else
+            assert(0);*/
 
       }
          return;
@@ -1979,7 +1979,7 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
       return;
    }
 
-   assert(0);
+   //assert(0);
 }
 
 u8 onchip_sci_read_byte(struct Onchip * regs, u32 addr, int which)
@@ -2000,7 +2000,7 @@ u8 onchip_sci_read_byte(struct Onchip * regs, u32 addr, int which)
       return regs->sci[which].rdr;
    }
 
-   assert(0);
+   //assert(0);
 
    return 0;
 }
@@ -2170,7 +2170,7 @@ u8 onchip_read_byte(struct Onchip * regs, u32 addr)
       case 1:
       case 2:
       case 3:
-         assert(0);
+         //assert(0);
          break;
          //ipra
       case 4:
@@ -2412,7 +2412,7 @@ u8 onchip_read_byte(struct Onchip * regs, u32 addr)
       return 0;
    }
 
-   assert(0);
+   //assert(0);
 
    return 0;
 }
@@ -2435,7 +2435,7 @@ void onchip_sci_write_word(struct Onchip * regs, u32 addr, int which, u16 data)
       return;
    }
 
-   assert(0);
+   //assert(0);
 }
 
 void onchip_dmac_write_word(struct Onchip * regs, u32 addr, int which, u16 data)
@@ -2468,7 +2468,7 @@ void onchip_dmac_write_word(struct Onchip * regs, u32 addr, int which, u16 data)
       return;
    }
 
-   assert(0);
+   //assert(0);
 }
 
 void onchip_write_word(struct Onchip * regs, u32 addr, u16 data)
@@ -2659,7 +2659,7 @@ void onchip_write_word(struct Onchip * regs, u32 addr, u16 data)
 
       //everywhere else is inacessible
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFF40 && addr <= 0x5FFFF7F)
    {
@@ -2690,7 +2690,7 @@ void onchip_write_word(struct Onchip * regs, u32 addr, u16 data)
          return;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFF80 && addr <= 0x5FFFF83)
    {
@@ -2725,7 +2725,7 @@ void onchip_write_word(struct Onchip * regs, u32 addr, u16 data)
          return;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFF90 && addr <= 0x5FFFF99)
    {
@@ -2749,7 +2749,7 @@ void onchip_write_word(struct Onchip * regs, u32 addr, u16 data)
          return;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFF9A && addr <= 0x5FFFF9F)
    {
@@ -2793,7 +2793,7 @@ void onchip_write_word(struct Onchip * regs, u32 addr, u16 data)
          return;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFFb4 && addr <= 0x5FFFFb7)
    {
@@ -2831,7 +2831,7 @@ void onchip_write_word(struct Onchip * regs, u32 addr, u16 data)
          return;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFFC4 && addr <= 0x5FFFFCF)
    {
@@ -2859,7 +2859,7 @@ void onchip_write_word(struct Onchip * regs, u32 addr, u16 data)
          return;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr == 0x5FFFFD0)
    {
@@ -2900,14 +2900,14 @@ void onchip_write_word(struct Onchip * regs, u32 addr, u16 data)
          return;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFFF8 && addr <= 0x5FFFFFF)
    {
       //unmapped
       return;
    }
-   assert(0);
+   //assert(0);
 
    return;
 }
@@ -2924,7 +2924,7 @@ u16 onchip_sci_read_word(struct Onchip * regs, u32 addr, int which)
       return regs->sci[which].ssr << 8 | regs->sci[which].rdr;
    }
 
-   assert(0);
+   //assert(0);
 
    return 0;
 }
@@ -2956,7 +2956,7 @@ u16 onchip_timer_read_word(struct Onchip * regs, u32 addr, int which_timer)
       break;
    }
 
-   assert(0);
+   //assert(0);
    return 0;
 }
 
@@ -2983,7 +2983,7 @@ u16 onchip_dmac_read_word(struct Onchip * regs, u32 addr, int which)
       return regs->dmac.channel[which].chcr;
    }
 
-   assert(0);
+   //assert(0);
 
    return 0;
 }
@@ -3041,7 +3041,7 @@ u16 onchip_read_word(struct Onchip * regs, u32 addr)
          return regs->adcsr << 8 | regs->adcr;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFEEa && addr <= 0x5FFFEEf)
    {
@@ -3099,7 +3099,7 @@ u16 onchip_read_word(struct Onchip * regs, u32 addr)
       }
       //everywhere else is inacessible
 
-      assert(0);
+      //assert(0);
 
    }
    else if (addr >= 0x5FFFF40 && addr <= 0x5FFFF7F)
@@ -3126,7 +3126,7 @@ u16 onchip_read_word(struct Onchip * regs, u32 addr)
          return onchip_dmac_read_word(regs, addr - 0x5FFFF70, 3);
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFF80 && addr <= 0x5FFFF83)
    {
@@ -3155,7 +3155,7 @@ u16 onchip_read_word(struct Onchip * regs, u32 addr)
          return regs->intc.icr;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFF90 && addr <= 0x5FFFF99)
    {
@@ -3174,7 +3174,7 @@ u16 onchip_read_word(struct Onchip * regs, u32 addr)
          return regs->ubc.bbr;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFF9A && addr <= 0x5FFFF9F)
    {
@@ -3208,7 +3208,7 @@ u16 onchip_read_word(struct Onchip * regs, u32 addr)
          return regs->bsc.rtcor;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFFb4 && addr <= 0x5FFFFb7)
    {
@@ -3243,7 +3243,7 @@ u16 onchip_read_word(struct Onchip * regs, u32 addr)
          return regs->pbdr;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFFC4 && addr <= 0x5FFFFCF)
    {
@@ -3265,7 +3265,7 @@ u16 onchip_read_word(struct Onchip * regs, u32 addr)
          return regs->pfc.pbcr2;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr == 0x5FFFFD0)
    {
@@ -3296,14 +3296,14 @@ u16 onchip_read_word(struct Onchip * regs, u32 addr)
          return regs->tpc.ndrb << 8 | regs->tpc.ndra;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFFF8 && addr <= 0x5FFFFFF)
    {
       //unmapped
       return 0;
    }
-   assert(0);
+   //assert(0);
 
    return 0;
 }
@@ -3333,7 +3333,7 @@ void onchip_dmac_write_long(struct Onchip * regs, u32 addr, int which, u32 data)
       return;
    }
 
-   assert(0);
+   //assert(0);
 }
 void onchip_write_long(struct Onchip * regs, u32 addr, u32 data)
 {
@@ -3517,7 +3517,7 @@ void onchip_write_long(struct Onchip * regs, u32 addr, u32 data)
          return;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFF40 && addr <= 0x5FFFF7F)
    {
@@ -3548,7 +3548,7 @@ void onchip_write_long(struct Onchip * regs, u32 addr, u32 data)
          return;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFF80 && addr <= 0x5FFFF83)
    {
@@ -3589,7 +3589,7 @@ void onchip_write_long(struct Onchip * regs, u32 addr, u32 data)
          return;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFF90 && addr <= 0x5FFFF99)
    {
@@ -3611,7 +3611,7 @@ void onchip_write_long(struct Onchip * regs, u32 addr, u32 data)
          return;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFF9A && addr <= 0x5FFFF9F)
    {
@@ -3659,7 +3659,7 @@ void onchip_write_long(struct Onchip * regs, u32 addr, u32 data)
          return;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFFb4 && addr <= 0x5FFFFb7)
    {
@@ -3709,7 +3709,7 @@ void onchip_write_long(struct Onchip * regs, u32 addr, u32 data)
          return;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFFC4 && addr <= 0x5FFFFCF)
    {
@@ -3744,7 +3744,7 @@ void onchip_write_long(struct Onchip * regs, u32 addr, u32 data)
          return;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr == 0x5FFFFD0)
    {
@@ -3769,14 +3769,14 @@ void onchip_write_long(struct Onchip * regs, u32 addr, u32 data)
       //not accessible from 32 bit
       return;
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFFF8 && addr <= 0x5FFFFFF)
    {
       //unmapped
       return;
    }
-   assert(0);
+   //assert(0);
 
    return;
 }
@@ -3802,7 +3802,7 @@ u32 onchip_dmac_read_long(struct Onchip * regs, u32 addr, int which)
    }
 
   
-   assert(0);
+   //assert(0);
 
    return 0;
 }
@@ -3964,7 +3964,7 @@ u32 onchip_read_long(struct Onchip * regs, u32 addr)
          return regs->itu.channel[4].brb << 16 | 0;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFF40 && addr <= 0x5FFFF7F)
    {
@@ -3990,7 +3990,7 @@ u32 onchip_read_long(struct Onchip * regs, u32 addr)
          return onchip_dmac_read_long(regs, addr - 0x5FFFF70, 3);
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFF80 && addr <= 0x5FFFF83)
    {
@@ -4019,7 +4019,7 @@ u32 onchip_read_long(struct Onchip * regs, u32 addr)
          return regs->intc.icr << 16 | 0;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFF90 && addr <= 0x5FFFF99)
    {
@@ -4038,7 +4038,7 @@ u32 onchip_read_long(struct Onchip * regs, u32 addr)
          return regs->ubc.bar << 16 | 0;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFF9A && addr <= 0x5FFFF9F)
    {
@@ -4072,7 +4072,7 @@ u32 onchip_read_long(struct Onchip * regs, u32 addr)
          return regs->bsc.rtcor << 16 | 0;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFFb4 && addr <= 0x5FFFFb7)
    {
@@ -4107,7 +4107,7 @@ u32 onchip_read_long(struct Onchip * regs, u32 addr)
          return regs->pbdr << 16 | regs->pfc.paior;//check this
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFFC4 && addr <= 0x5FFFFCF)
    {
@@ -4134,7 +4134,7 @@ u32 onchip_read_long(struct Onchip * regs, u32 addr)
          return 0;
       }
 
-      assert(0);
+      //assert(0);
    }
    else if (addr == 0x5FFFFD0)
    {
@@ -4157,14 +4157,14 @@ u32 onchip_read_long(struct Onchip * regs, u32 addr)
       //not accessible from 32 bit
       return 0;
 
-      assert(0);
+      //assert(0);
    }
    else if (addr >= 0x5FFFFF8 && addr <= 0x5FFFFFF)
    {
       //unmapped
       return 0;
    }
-   assert(0);
+   //assert(0);
 
    return 0;
 }
@@ -4266,7 +4266,7 @@ void memory_map_write_byte(struct Sh1* sh1, u32 addr, u8 data)
       break;
    }
 
-   assert(0);
+   //assert(0);
 }
 
 u8 memory_map_read_byte(struct Sh1* sh1, u32 addr)
@@ -4362,7 +4362,7 @@ u8 memory_map_read_byte(struct Sh1* sh1, u32 addr)
       break;
    }
 
-   assert(0);
+   //assert(0);
    return 0;
 }
 
@@ -4461,7 +4461,7 @@ u16 memory_map_read_word(struct Sh1* sh1, u32 addr)
       break;
    }
 
-   assert(0);
+   //assert(0);
    return 0;
 }
 
@@ -4579,7 +4579,7 @@ void memory_map_write_word(struct Sh1* sh1, u32 addr, u16 data)
       break;
    }
 
-   assert(0);
+   //assert(0);
 
    return;
 }
@@ -4778,7 +4778,7 @@ void memory_map_write_long(struct Sh1* sh1, u32 addr, u32 data)
       break;
    }
 //triggered by yabauseut
- //  assert(0);
+ //  //assert(0);
 
    return;
 }
@@ -5014,7 +5014,8 @@ void tick_timer(int which)
          sh1_cxt.onchip.itu.channel[which].tcnt_fraction++;
          break;
       default:
-         assert(0);
+         //assert(0);
+         break;
       }
 
       if (sh1_cxt.onchip.itu.channel[which].tier & (1 << 2))
@@ -5138,7 +5139,8 @@ u16 update_tcnt_fast(int which, s32 cycles)
       return update_tcnt_fraction(which, cycles, 8);
       break;
    default:
-      assert(0);
+      //assert(0);
+      break;
    }
 
    return 0;
@@ -5316,7 +5318,7 @@ void tick_serial(int channel)
 
    clock_mode = sh1_cxt.onchip.sci[channel].smr & 3;
    if (clock_mode == 3 || clock_mode == 2)//clock pin set as input
-      assert(0);
+      //assert(0);
 
    sh1_cxt.onchip.sci[channel].serial_clock_counter++;
 
@@ -5607,7 +5609,7 @@ void sh1_serial_transmit_bit(int channel, int* output_bit)
 
       if (sh1_cxt.onchip.sci[0].scr & SCI_TIE)
       {
-         assert(0);
+         //assert(0);
        //  SH2SendInterrupt(SH1, 101, sh1_cxt.onchip.intc.iprd & 0xf);
       }
    }

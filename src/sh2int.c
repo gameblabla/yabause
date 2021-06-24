@@ -109,9 +109,11 @@ static u32 FASTCALL FetchSH1MpegRom(SH2_struct *sh, u32 addr)
 
 static u32 FASTCALL FetchBios(SH2_struct *sh, u32 addr)
 {
+   #if 0
    if (yabsys.sh2_cache_enabled)
       return cache_memory_read_w(sh, &sh->onchip.cache, addr);
    else
+   #endif
       return T2ReadWord(BiosRom, addr & 0x7FFFF);
 }
 
@@ -119,9 +121,11 @@ static u32 FASTCALL FetchBios(SH2_struct *sh, u32 addr)
 
 static u32 FASTCALL FetchCs0(SH2_struct *sh, u32 addr)
 {
+   #if 0
    if (yabsys.sh2_cache_enabled)
       return cache_memory_read_w(sh, &sh->onchip.cache, addr);
    else
+   #endif
       return CartridgeArea->Cs0ReadWord(sh, addr);
 }
 
@@ -129,9 +133,11 @@ static u32 FASTCALL FetchCs0(SH2_struct *sh, u32 addr)
 
 static u32 FASTCALL FetchLWram(SH2_struct *sh, u32 addr)
 {
+	#if 0
    if (yabsys.sh2_cache_enabled)
       return cache_memory_read_w(sh, &sh->onchip.cache, addr);
    else
+   #endif
       return T2ReadWord(LowWram, addr & 0xFFFFF);
 }
 
@@ -139,9 +145,11 @@ static u32 FASTCALL FetchLWram(SH2_struct *sh, u32 addr)
 
 static u32 FASTCALL FetchHWram(SH2_struct *sh, u32 addr)
 {
+	#if 0
    if (yabsys.sh2_cache_enabled)
       return cache_memory_read_w(sh, &sh->onchip.cache, addr);
    else
+   #endif
       return T2ReadWord(HighWram, addr & 0xFFFFF);
 }
 
@@ -164,6 +172,7 @@ static u32 FASTCALL FetchInvalid(UNUSED u32 addr)
 
 static void FASTCALL SH2delay(SH2_struct * sh, u32 addr)
 {
+   #if 0
    // Fetch Instruction
    if (yabsys.sh2_cache_enabled)
    {
@@ -173,6 +182,7 @@ static void FASTCALL SH2delay(SH2_struct * sh, u32 addr)
          sh->instruction = ((fetchfunc *)sh->fetchlist)[(addr >> 20) & 0x0FF](sh, addr);
    }
    else
+   #endif
    {
       sh->instruction = ((fetchfunc *)sh->fetchlist)[(addr >> 20) & 0x0FF](sh, addr);
    }
@@ -2829,7 +2839,11 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
 {
    SH2HandleInterrupts(context);
 
-   if ((!yabsys.sh2_cache_enabled) && (context->model != SHMT_SH1))
+   if (
+   #if 0
+   (!yabsys.sh2_cache_enabled) && 
+   #endif
+   (context->model != SHMT_SH1))
    {
       if (context->isIdle)
          SH2idleParse(context, cycles);
@@ -2843,6 +2857,7 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
       int cycles_diff = 0;
       // Fetch Instruction
 
+	  #if 0
       if (yabsys.sh2_cache_enabled)
       {
          if ((context->regs.PC & 0xC0000000) == 0xC0000000)
@@ -2851,6 +2866,7 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
             context->instruction = ((fetchfunc *)context->fetchlist)[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
       }
       else
+      #endif
       {
          context->instruction = ((fetchfunc *)context->fetchlist)[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
       }

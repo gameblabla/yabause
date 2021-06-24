@@ -638,7 +638,7 @@ int do_command()
 #endif
    }
 
-   assert(0);
+   //assert(0);
 
    return TIME_PERIODIC;
 }
@@ -807,7 +807,7 @@ int cd_command_exec()
       return do_command();
    }
 
-   assert(0);
+   //assert(0);
 
    return 1;
 
